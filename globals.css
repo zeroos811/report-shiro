@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --red: #dc2626; --red-d: #b91c1c; --red-l: #fef2f2; --red-b: #fee2e2;
+  --ink: #0f172a; --ink2: #64748b; --ink3: #94a3b8;
+  --bg: #f1f5f9; --bg2: #e2e8f0;
+  --ok: #16a34a; --purple: #6366f1;
+}
+
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--ink); }
+.mono { font-family: 'DM Mono', monospace; }
+
+@layer components {
+  .btn { @apply flex items-center justify-center gap-2 w-full border-none font-bold rounded-2xl cursor-pointer transition-opacity active:opacity-80; }
+  .btn-red { @apply bg-red-600 text-white py-4; box-shadow: 0 4px 14px rgba(220,38,38,.28); }
+  .btn-white { @apply bg-white text-slate-700 border border-slate-200 py-3; }
+  .btn-green { @apply bg-green-600 text-white py-4; }
+  .card { @apply bg-white rounded-2xl border border-slate-200 shadow-sm; }
+  .inp { @apply w-full px-3 py-3 rounded-xl bg-slate-100 border border-slate-200 text-sm outline-none transition-colors focus:border-red-500 focus:bg-white; font-family: inherit; -webkit-appearance: none; }
+  .lbl { @apply block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1; }
+  .data-row { @apply flex justify-between text-sm py-2 border-b border-slate-100 last:border-0; }
+  .badge { @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold; }
+  .tbar { @apply bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3 sticky top-0 z-20; }
+  .ibtn { @apply w-9 h-9 rounded-xl bg-slate-100 border-none cursor-pointer flex items-center justify-center flex-shrink-0; }
+}
