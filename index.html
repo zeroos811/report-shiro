@@ -1,0 +1,2186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<title>Shiro Closing</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --red:#dc2626;--red-d:#b91c1c;--red-l:#fef2f2;--red-b:#fee2e2;
+  --ink:#0f172a;--ink2:#64748b;--ink3:#94a3b8;
+  --bg:#f1f5f9;--bg2:#e2e8f0;--white:#fff;
+  --ok:#16a34a;--warn:#f59e0b;--purple:#6366f1;
+  --r:12px;--r-lg:16px;--r-xl:20px;
+  --sh:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --sh-md:0 4px 12px rgba(0,0,0,.08);
+}
+html{background:var(--bg);font-family:'Plus Jakarta Sans',sans-serif}
+body{min-height:100vh;margin:0;background:var(--bg)}
+/* No phone shell — full responsive */
+.phone{width:100%;background:var(--bg)}
+
+/* Page system */
+.page{display:none;flex-direction:column;background:var(--bg);min-height:100vh}
+.page.show{display:flex}
+/* Admin pages dengan bnav: tinggi tepat 100vh, tidak overflow */
+.page-admin{height:100dvh;overflow:hidden}
+
+/* Status bar — HIDDEN (use real device status bar) */
+.sbar{display:none}
+
+/* Top bar */
+.tbar{background:var(--white);border-bottom:1px solid var(--bg2);padding:11px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;position:sticky;top:0;z-index:20;max-width:100%}
+.tbar-title{font-weight:800;font-size:15px;color:var(--ink);flex:1}
+.tbar-sub{font-size:10px;color:var(--ink3);margin-top:1px}
+.ibtn{width:34px;height:34px;border-radius:10px;background:var(--bg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* Bottom nav */
+.bnav{background:var(--white);border-top:1.5px solid var(--bg2);display:flex;flex-shrink:0;z-index:20}
+.btab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px 13px;border:none;background:none;cursor:pointer;color:var(--ink3);font-size:10px;font-weight:700;font-family:inherit;transition:color .12s}
+.btab svg{width:19px;height:19px}
+.btab.on{color:var(--red)}
+
+/* ── Responsive layout helpers ────────── */
+.wrap{width:100%;max-width:900px;margin:0 auto;padding:0 16px}
+@media(min-width:768px){
+  .tbar{padding:13px 24px}
+  .wrap{padding:0 28px}
+  .page-content{padding:20px 28px 32px}
+  .stat-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .stat-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+}
+@media(min-width:1024px){
+  .tbar{padding:14px 40px}
+  .wrap{max-width:1100px;padding:0 40px}
+  .page-content{padding:24px 40px 40px}
+  .stat-grid-4{grid-template-columns:repeat(4,1fr)}
+}
+
+/* Buttons */
+.btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;border:none;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;border-radius:var(--r-lg);transition:opacity .1s,transform .1s}
+.btn:active{opacity:.85;transform:scale(.98)}
+.btn-red{background:var(--red);color:#fff;padding:16px 18px;box-shadow:0 4px 14px rgba(220,38,38,.28)}
+.btn-white{background:var(--white);color:var(--ink);padding:13px 18px;border:1.5px solid var(--bg2)}
+.btn-green{background:var(--ok);color:#fff;padding:14px 18px}
+.btn-ghost{background:transparent;color:var(--ink2);padding:12px 18px;border:1.5px solid var(--bg2);font-size:13px}
+
+/* Card */
+.card{background:var(--white);border-radius:var(--r-lg);box-shadow:var(--sh);border:1px solid var(--bg2)}
+
+/* Input */
+.inp{width:100%;padding:11px 12px;border-radius:var(--r);background:var(--bg);border:1.5px solid var(--bg2);font-size:14px;font-family:inherit;color:var(--ink);outline:none;transition:border .15s,background .15s;-webkit-appearance:none}
+.inp:focus{border-color:var(--red);background:var(--white)}
+.inp.mono{font-family:'DM Mono',monospace}
+.inp-wrap{position:relative}
+.inp-wrap .inp{padding-left:32px}
+.inp-pre{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--ink3);font-family:'DM Mono',monospace;pointer-events:none}
+label.lbl{display:block;font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+
+/* Misc */
+.row{display:flex;justify-content:space-between;align-items:center}
+.hr{height:1px;background:var(--bg2);margin:8px 0}
+.sec{font-weight:800;font-size:14px;color:var(--ink)}
+.muted{color:var(--ink3);font-size:13px}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700}
+.addbtn{display:flex;align-items:center;gap:5px;color:var(--red);font-size:13px;font-weight:700;cursor:pointer;padding:6px 0;background:none;border:none;font-family:inherit}
+.li{background:var(--bg);border-radius:var(--r);padding:9px;border:1px solid var(--bg2);margin-bottom:6px}
+.jbtn{padding:6px 0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid var(--bg2);background:var(--bg);color:var(--ink2);flex:1;transition:all .12s}
+.jbtn.t-on{background:#f59e0b;color:#fff;border-color:#f59e0b}
+.jbtn.n-on{background:var(--purple);color:#fff;border-color:var(--purple)}
+.shift-chip{padding:5px 12px;border-radius:99px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--bg2);background:var(--bg);color:var(--ink2);font-family:inherit;transition:all .12s;flex:1;text-align:center}
+.shift-chip.on{background:var(--red);color:#fff;border-color:var(--red)}
+.stat-card{background:var(--white);border-radius:var(--r-lg);padding:14px;border:1px solid var(--bg2);box-shadow:var(--sh)}
+.data-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--bg2)}
+.data-row:last-child{border-bottom:none}
+.filter-chip{padding:5px 12px;border-radius:99px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--bg2);background:var(--white);color:var(--ink2);font-family:inherit;white-space:nowrap;transition:all .12s}
+.filter-chip.on{background:var(--red);color:#fff;border-color:var(--red)}
+.prog{height:6px;background:var(--bg2);border-radius:99px;overflow:hidden;margin-top:6px}
+.prog-f{height:100%;border-radius:99px;transition:width .6s}
+.sum-block{border-radius:var(--r-lg);overflow:hidden;border:1.5px solid var(--bg2)}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+/* Laporan list responsive */
+@media(min-width:768px){
+  .lap-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .form-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+}
+.sum-header{background:var(--ink);padding:10px 14px}
+.sum-header p:first-child{font-size:11px;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.07em}
+.sum-header p:last-child{font-size:11px;color:rgba(255,255,255,.4);margin-top:1px}
+.sum-row{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--bg2);background:var(--white)}
+.sum-row:last-child{border-bottom:none}
+.sum-footer{background:#fff8f8;padding:11px 14px}
+</style>
+</head>
+<body>
+<div class="phone">
+
+<!-- ══════ HOME ══════ -->
+<div class="page show" id="home" style="background:#fff">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px 28px;max-width:480px;margin:0 auto;width:100%">
+    <div style="width:80px;height:80px;border-radius:22px;background:var(--red);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(220,38,38,.30);margin-bottom:16px">
+      <svg width="42" height="42" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M3 17c2.5-3 4.5-5 8-5s5.5 2 8-1"/><path d="M3 11c2.5-3 4.5-5 8-5s5.5 2 8-1"/></svg>
+    </div>
+    <p style="font-size:10px;font-weight:700;color:var(--red);letter-spacing:.18em;text-transform:uppercase;margin-bottom:5px">SHIRO CLEAN LAUNDRY</p>
+    <h1 style="font-size:30px;font-weight:800;color:var(--ink);letter-spacing:-.5px;text-align:center;margin-bottom:6px">Shiro Closing</h1>
+    <p style="font-size:13px;color:var(--ink2);text-align:center;line-height:1.55;margin-bottom:32px">Laporan closing kasir harian<br>cepat &amp; langsung ke WhatsApp</p>
+
+    <!-- Buat Laporan -->
+    <button onclick="nav('kasir')" style="width:100%;max-width:420px;background:var(--red);border-radius:16px;border:none;cursor:pointer;padding:16px 18px;display:flex;align-items:center;gap:14px;box-shadow:0 5px 18px rgba(220,38,38,.26);margin-bottom:11px;text-align:left;transition:opacity .1s">
+      <div style="width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="21" height="21" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      <div style="flex:1">
+        <p style="font-size:15px;font-weight:800;color:#fff;margin-bottom:1px">Buat Laporan</p>
+        <p style="font-size:12px;color:rgba(255,255,255,.7)">Isi data closing kasir harian</p>
+      </div>
+      <svg width="16" height="16" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+    </button>
+
+    <div style="display:flex;align-items:center;gap:10px;width:100%;margin-bottom:11px">
+      <div style="flex:1;height:1px;background:var(--bg2)"></div>
+      <span style="font-size:12px;color:var(--ink3)">atau</span>
+      <div style="flex:1;height:1px;background:var(--bg2)"></div>
+    </div>
+
+    <!-- Login Admin -->
+    <button onclick="nav('login')" style="width:100%;background:#fff;border-radius:16px;border:1.5px solid var(--bg2);cursor:pointer;padding:14px 18px;display:flex;align-items:center;gap:14px;box-shadow:var(--sh);text-align:left">
+      <div style="width:40px;height:40px;border-radius:12px;background:var(--red-l);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="19" height="19" fill="none" stroke="var(--red)" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
+      </div>
+      <div style="flex:1">
+        <p style="font-size:14px;font-weight:800;color:var(--ink);margin-bottom:1px">Login Admin</p>
+        <p style="font-size:12px;color:var(--ink2)">Dashboard &amp; kelola laporan</p>
+      </div>
+      <svg width="14" height="14" fill="none" stroke="var(--ink3)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+  <div style="padding:14px 24px 22px;text-align:center;background:#fff;flex-shrink:0">
+    <p style="font-size:11px;color:var(--ink3)">© 2024 Shiro Clean Laundry · v2.0</p>
+  </div>
+</div>
+
+<!-- ══════ KASIR FORM ══════ -->
+<div class="page" id="kasir">
+  <div class="tbar">
+    <button class="ibtn" onclick="nav('home')"><svg width="17" height="17" fill="none" stroke="var(--ink)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg></button>
+    <div style="flex:1"><div class="tbar-title">Buat Laporan</div><div class="tbar-sub" id="k-date-display"></div></div>
+  </div>
+  <div style="padding:14px 16px 88px;display:flex;flex-direction:column;gap:9px;max-width:720px;margin:0 auto;width:100%">
+
+    <!-- Identitas -->
+    <div class="card" style="padding:13px">
+      <p class="sec" style="margin-bottom:11px">Identitas</p>
+      <div style="margin-bottom:10px">
+        <label class="lbl">Nama Kasir</label>
+        <input class="inp" id="k-name" placeholder="Masukkan nama kasir..."/>
+      </div>
+      <div style="margin-bottom:10px">
+        <label class="lbl">Tanggal Laporan</label>
+        <input class="inp" id="k-date" type="date" onchange="updateDateDisplay();if(SHIFT===2)updateShift2UI();"/>
+      </div>
+      <div>
+        <label class="lbl">Shift</label>
+        <div style="display:flex;gap:8px;margin-top:2px">
+          <button class="shift-chip on" id="chip-s1" onclick="setShift(1)">Shift 1</button>
+          <button class="shift-chip" id="chip-s2" onclick="setShift(2)">Shift 2</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Petty Cash -->
+    <div class="card" style="padding:13px">
+      <p class="sec" style="margin-bottom:4px">Petty Cash</p>
+      <p style="font-size:11px;color:var(--ink3);margin-bottom:10px">Uang tunai yang ditahan sebagai kas kecil</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label class="lbl">Awal</label>
+          <div class="inp-wrap">
+            <span class="inp-pre">Rp</span>
+            <input class="inp mono" id="k-pc-awal" placeholder="0" oninput="fmt(this)"/>
+          </div>
+        </div>
+        <div>
+          <label class="lbl">Akhir</label>
+          <div class="inp-wrap">
+            <span class="inp-pre">Rp</span>
+            <input class="inp mono" id="k-pc-akhir" placeholder="0" oninput="fmt(this)"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shift 2: banner info (hidden by default) -->
+    <div id="shift2-banner" style="display:none"></div>
+
+    <!-- Pendapatan -->
+    <div class="card" style="padding:13px" id="pay-card">
+      <p class="sec" style="margin-bottom:2px" id="pay-title">Pendapatan</p>
+      <p style="font-size:11px;color:var(--ink3);margin-bottom:10px" id="pay-sub">Tunai → Setoran Tunai · QRIS/Transfer/EDC → Non Tunai</p>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <div><label class="lbl">💵 Tunai</label><div class="inp-wrap"><span class="inp-pre">Rp</span><input class="inp mono" id="k-tunai" placeholder="0" oninput="fmt(this);recalc()"/></div></div>
+        <div><label class="lbl">📱 QRIS</label><div class="inp-wrap"><span class="inp-pre">Rp</span><input class="inp mono" id="k-qris" placeholder="0" oninput="fmt(this);recalc()"/></div></div>
+        <div><label class="lbl">🏦 Transfer</label><div class="inp-wrap"><span class="inp-pre">Rp</span><input class="inp mono" id="k-transfer" placeholder="0" oninput="fmt(this);recalc()"/></div></div>
+        <div><label class="lbl">💳 EDC</label><div class="inp-wrap"><span class="inp-pre">Rp</span><input class="inp mono" id="k-edc" placeholder="0" oninput="fmt(this);recalc()"/></div></div>
+      </div>
+    </div>
+
+    <!-- Shift 2: diff preview (hidden by default) -->
+    <div id="diff-card" style="display:none;border-radius:var(--r-lg);overflow:hidden;border:1.5px solid var(--bg2)">
+      <div style="background:var(--ink);padding:9px 13px">
+        <p style="font-size:11px;font-weight:700;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.07em">Kalkulasi Otomatis Shift 2</p>
+        <p style="font-size:10px;color:rgba(255,255,255,.45);margin-top:1px">Input Total − Shift 1 = Shift 2</p>
+      </div>
+      <div style="background:var(--white);padding:6px 13px 4px">
+        <div style="display:flex;font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;padding:4px 0 6px;border-bottom:1px solid var(--bg2)">
+          <span style="flex:1">Item</span>
+          <span style="min-width:68px;text-align:right">Total Baru</span>
+          <span style="min-width:18px"></span>
+          <span style="min-width:68px;text-align:right">Shift 1</span>
+          <span style="min-width:18px"></span>
+          <span style="min-width:68px;text-align:right">Shift 2</span>
+        </div>
+        <div id="diff-body"></div>
+      </div>
+    </div>
+
+    <!-- Pemasukan Lain -->
+    <div class="card" style="padding:13px">
+      <p class="sec" style="margin-bottom:2px">Pemasukan Lain</p>
+      <p style="font-size:11px;color:var(--ink3);margin-bottom:9px">Pilih kategori untuk kalkulasi setoran otomatis</p>
+      <div id="pm-list"></div>
+      <button class="addbtn" onclick="addLine('pm')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Tambah Pemasukan
+      </button>
+    </div>
+
+    <!-- Pengeluaran -->
+    <div class="card" style="padding:13px">
+      <p class="sec" style="margin-bottom:2px">Pengeluaran</p>
+      <p style="font-size:11px;color:var(--ink3);margin-bottom:9px">Nominal · Kategori · Keterangan · Foto Nota</p>
+      <div id="pk-list"></div>
+      <button class="addbtn" onclick="addLine('pk')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Tambah Pengeluaran
+      </button>
+    </div>
+
+    <!-- Ringkasan -->
+    <div class="sum-block">
+      <div class="sum-header">
+        <p>Ringkasan Setoran</p>
+        <p>Dihitung otomatis · realtime</p>
+      </div>
+      <!-- Setoran Tunai — UTAMA -->
+      <div style="padding:11px 14px;border-bottom:1px solid var(--bg2);background:var(--white)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="width:8px;height:8px;border-radius:99px;background:#f59e0b"></div>
+            <span style="font-size:12px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em">Setoran Tunai</span>
+          </div>
+          <span class="mono" style="font-weight:800;font-size:18px;color:#d97706" id="s-tunai">Rp 0</span>
+        </div>
+        <p style="font-size:11px;color:var(--ink3);padding-left:15px" id="s-tunai-detail">Tunai: Rp 0</p>
+      </div>
+      <!-- Setoran Non Tunai — UTAMA -->
+      <div style="padding:11px 14px;border-bottom:1px solid var(--bg2);background:var(--white)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="width:8px;height:8px;border-radius:99px;background:var(--purple)"></div>
+            <span style="font-size:12px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em">Setoran Non Tunai</span>
+          </div>
+          <span class="mono" style="font-weight:800;font-size:18px;color:var(--purple)" id="s-nontunai">Rp 0</span>
+        </div>
+        <p style="font-size:11px;color:var(--ink3);padding-left:15px" id="s-nontunai-detail">QRIS+Tf+EDC: Rp 0</p>
+      </div>
+      <!-- Total Omzet — UTAMA -->
+      <div style="padding:11px 14px;border-bottom:1px solid var(--bg2);background:var(--white)">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:12px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em">Total Omzet</span>
+          <span class="mono" style="font-weight:800;font-size:18px;color:var(--ink)" id="s-om">Rp 0</span>
+        </div>
+        <p style="font-size:11px;color:var(--ink3);margin-top:2px">Tunai + QRIS + Transfer + EDC</p>
+      </div>
+      <!-- Detail baris bawah -->
+      <div class="sum-footer">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+          <span style="color:var(--ink2)">Pemasukan Lain</span>
+          <span class="mono" style="font-weight:600;color:var(--ok)" id="s-pm">Rp 0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <span style="color:var(--ink2)">Pengeluaran</span>
+          <span class="mono" style="color:var(--red)" id="s-pk">- Rp 0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="flex-shrink:0;padding:9px 12px 14px;background:rgba(241,245,249,.96);backdrop-filter:blur(8px);border-top:1px solid var(--bg2)">
+    <!-- Catatan verifikasi POS via WhatsApp -->
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:var(--r);padding:10px 12px;margin-bottom:10px;display:flex;align-items:flex-start;gap:8px">
+      <svg width="14" height="14" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <p style="font-size:11px;color:#92400e;line-height:1.6;margin:0">Setelah laporan dikirim, lampirkan <b>screenshot laporan POS</b> melalui WhatsApp untuk verifikasi owner.</p>
+    </div>
+    <button class="btn btn-red" onclick="doSubmit()">
+      <svg width="17" height="17" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      Simpan Laporan
+    </button>
+  </div>
+</div>
+
+<!-- ══════ SUKSES ══════ -->
+<div class="page" id="sukses" style="background:#fff">
+  <div class="tbar">
+    <button class="ibtn" onclick="nav('home')"><svg width="17" height="17" fill="none" stroke="var(--ink)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg></button>
+    <div class="tbar-title">Laporan Tersimpan</div>
+  </div>
+  <div style="padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:13px;max-width:560px;margin:0 auto;width:100%">
+    <div style="width:68px;height:68px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center">
+      <svg width="34" height="34" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </div>
+    <div style="text-align:center">
+      <h2 style="font-size:21px;font-weight:800;color:var(--ink)">Laporan Berhasil Disimpan!</h2>
+      <p style="color:var(--ink3);font-size:13px;margin-top:3px">Data terkunci dan tidak bisa diedit kasir.</p>
+    </div>
+    <div id="sukses-badge"></div>
+    <!-- 3 angka utama -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;width:100%">
+      <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:14px;padding:11px;text-align:center">
+        <p style="font-size:9px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Setoran Tunai</p>
+        <p class="mono" style="font-weight:800;font-size:13px;color:#d97706" id="r-st">—</p>
+      </div>
+      <div style="background:#ede9fe;border:1.5px solid #c4b5fd;border-radius:14px;padding:11px;text-align:center">
+        <p style="font-size:9px;font-weight:700;color:#5b21b6;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Non Tunai</p>
+        <p class="mono" style="font-weight:800;font-size:13px;color:#6d28d9" id="r-sn">—</p>
+      </div>
+      <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:14px;padding:11px;text-align:center">
+        <p style="font-size:9px;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Total Omzet</p>
+        <p class="mono" style="font-weight:800;font-size:13px;color:#16a34a" id="r-om">—</p>
+      </div>
+    </div>
+    <div class="card" style="padding:13px;width:100%">
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div class="data-row"><span class="muted">Kasir</span><span style="font-weight:700" id="r-kasir">—</span></div>
+        <div class="data-row"><span class="muted">Tanggal</span><span style="font-weight:600" id="r-tgl">—</span></div>
+        <div class="data-row"><span class="muted">Shift</span><span id="r-shift">—</span></div>
+        <div class="data-row"><span class="muted">Jam</span><span style="font-weight:600" id="r-jam">—</span></div>
+        <div style="height:1px;background:var(--bg2);margin:4px 0"></div>
+        <div class="data-row"><span class="muted">Tunai</span><span class="mono" style="font-weight:600" id="r-tunai">—</span></div>
+        <div class="data-row"><span class="muted">QRIS</span><span class="mono" style="font-weight:600" id="r-qris">—</span></div>
+        <div class="data-row"><span class="muted">Transfer</span><span class="mono" style="font-weight:600" id="r-transfer">—</span></div>
+        <div class="data-row"><span class="muted">EDC</span><span class="mono" style="font-weight:600" id="r-edc">—</span></div>
+        <div style="height:1px;background:var(--bg2);margin:4px 0"></div>
+        <div class="data-row"><span class="muted">Pengeluaran</span><span class="mono" style="color:var(--red)" id="r-pk">—</span></div>
+        <div class="data-row"><span class="muted">Pemasukan Lain</span><span class="mono" style="color:var(--ok)" id="r-pm-val">—</span></div>
+        <div style="height:1px;background:var(--bg2);margin:4px 0" id="r-pc-divider" style="display:none"></div>
+        <div class="data-row" id="r-pc-row" style="display:none">
+          <span class="muted">💼 Petty Cash Awal</span>
+          <span class="mono" style="font-weight:600" id="r-pc-awal">—</span>
+        </div>
+        <div class="data-row" id="r-pc-akhir-row" style="display:none">
+          <span class="muted">💼 Petty Cash Akhir</span>
+          <span class="mono" style="font-weight:600" id="r-pc-akhir">—</span>
+        </div>
+        <div id="r-pk-list"></div>
+      </div>
+    </div>
+    <div style="width:100%;display:flex;flex-direction:column;gap:7px">
+      <button class="btn btn-green" onclick="sendWA()">
+        <svg width="17" height="17" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Kirim ke WhatsApp
+      </button>
+      <button class="btn btn-white" style="font-size:13px;padding:12px" onclick="nav('home')">Kembali ke Beranda</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ LOGIN ══════ -->
+<div class="page" id="login" style="background:#fff">
+  <div style="overflow-y:auto;padding:40px 24px 36px;display:flex;flex-direction:column;max-width:480px;margin:0 auto;width:100%">
+    <button onclick="nav('home')" style="display:flex;align-items:center;gap:5px;color:var(--ink3);font-size:13px;font-weight:600;background:none;border:none;cursor:pointer;font-family:inherit;margin-bottom:28px;align-self:flex-start">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>Kembali
+    </button>
+    <div style="display:flex;align-items:center;gap:13px;margin-bottom:28px">
+      <div style="width:46px;height:46px;border-radius:14px;background:var(--red);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="26" height="26" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M3 17c2.5-3 4.5-5 8-5s5.5 2 8-1"/><path d="M3 11c2.5-3 4.5-5 8-5s5.5 2 8-1"/></svg>
+      </div>
+      <div><p style="font-size:10px;color:var(--red);font-weight:700;text-transform:uppercase;letter-spacing:.12em">Admin Panel</p><h1 style="font-size:20px;font-weight:800;color:var(--ink)">Shiro Closing</h1></div>
+    </div>
+
+    <!-- Panel: Login Cepat (PIN / Biometrik) — tampil jika tersedia -->
+    <div id="quick-login-panel" style="display:none;margin-bottom:20px">
+      <!-- Biometrik -->
+      <button id="bio-btn" onclick="loginBiometrik()" style="display:none;width:100%;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:14px;padding:14px;cursor:pointer;font-family:inherit;margin-bottom:10px;align-items:center;gap:10px">
+        <svg width="20" height="20" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a5 5 0 015 5v3a5 5 0 01-10 0V7a5 5 0 015-5z"/><path d="M9 17v1a3 3 0 006 0v-1"/><path d="M6.34 8A7 7 0 0112 5a7 7 0 016 3.5"/></svg>
+        <span style="font-size:14px;font-weight:700;color:#16a34a" id="bio-label">Masuk dengan Face ID / Fingerprint</span>
+      </button>
+      <!-- PIN -->
+      <div id="pin-panel" style="display:none">
+        <p style="font-size:12px;color:var(--ink2);font-weight:600;margin-bottom:8px;text-align:center">Masukkan PIN</p>
+        <div id="pin-dots" style="display:flex;justify-content:center;gap:10px;margin-bottom:14px"></div>
+        <div id="pin-keypad" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:240px;margin:0 auto"></div>
+        <button onclick="showPasswordForm()" style="display:block;margin:12px auto 0;font-size:12px;color:var(--ink3);background:none;border:none;cursor:pointer;font-family:inherit">Gunakan Password</button>
+      </div>
+      <div id="divider-or" style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <div style="flex:1;height:1px;background:var(--bg2)"></div>
+        <span style="font-size:11px;color:var(--ink3)">atau</span>
+        <div style="flex:1;height:1px;background:var(--bg2)"></div>
+      </div>
+    </div>
+
+    <!-- Panel: Username + Password -->
+    <div id="pw-form-panel">
+      <div style="display:flex;flex-direction:column;gap:11px">
+        <div>
+          <label class="lbl">Username</label>
+          <input class="inp" id="l-u" placeholder="Username" autocomplete="off" autocapitalize="none" spellcheck="false"/>
+        </div>
+        <div>
+          <label class="lbl">Password</label>
+          <div style="position:relative">
+            <input class="inp" id="l-p" type="password" placeholder="Password" autocomplete="off" style="padding-right:44px"/>
+            <button type="button" onclick="togglePw('l-p','eye-login')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;color:var(--ink3)">
+              <svg id="eye-login" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <!-- Remember Me -->
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--ink2)">
+          <input type="checkbox" id="l-remember" style="width:16px;height:16px;accent-color:var(--red);cursor:pointer"/>
+          Ingat Saya selama 30 hari
+        </label>
+        <div id="l-err" style="display:none;background:var(--red-l);border:1px solid var(--red-b);border-radius:var(--r);padding:9px 12px;font-size:13px;color:var(--red);font-weight:600"></div>
+        <button class="btn btn-red" onclick="doLogin()" style="margin-top:2px">
+          <svg width="15" height="15" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Masuk
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MODAL: Setup Login Cepat (muncul setelah login berhasil) ══════ -->
+<div id="setup-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:20px;padding:24px;max-width:380px;width:100%">
+    <h2 style="font-size:18px;font-weight:800;color:var(--ink);margin-bottom:6px">Login Cepat</h2>
+    <p style="font-size:13px;color:var(--ink3);margin-bottom:18px">Aktifkan untuk membuka admin tanpa password setiap saat.</p>
+    <!-- Biometrik -->
+    <div id="setup-bio-section" style="display:none;margin-bottom:12px">
+      <button onclick="setupBiometrik()" style="width:100%;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:13px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:10px">
+        <svg width="18" height="18" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a5 5 0 015 5v3a5 5 0 01-10 0V7a5 5 0 015-5z"/><path d="M9 17v1a3 3 0 006 0v-1"/></svg>
+        <span style="font-size:13px;font-weight:700;color:#16a34a" id="setup-bio-label">Aktifkan Face ID / Fingerprint</span>
+      </button>
+    </div>
+    <!-- PIN Setup -->
+    <div style="margin-bottom:16px">
+      <p style="font-size:12px;font-weight:700;color:var(--ink2);margin-bottom:8px">Buat PIN (4-6 digit)</p>
+      <input type="password" id="setup-pin" inputmode="numeric" maxlength="6" placeholder="Masukkan PIN baru" style="width:100%;padding:11px 13px;border-radius:12px;background:var(--bg);border:1.5px solid var(--bg2);font-size:18px;font-family:'DM Mono',monospace;letter-spacing:6px;text-align:center;outline:none;box-sizing:border-box"/>
+      <p style="font-size:11px;color:var(--ink3);margin-top:5px">Minimal 4 digit. Gunakan angka yang mudah diingat.</p>
+      <div id="setup-pin-err" style="display:none;font-size:12px;color:var(--red);margin-top:4px"></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="closeSetupModal()" style="flex:1;padding:12px;border-radius:12px;border:1.5px solid var(--bg2);background:var(--bg);font-family:inherit;font-size:13px;font-weight:700;color:var(--ink2);cursor:pointer">Lewati</button>
+      <button onclick="saveSetup()" style="flex:1;padding:12px;border-radius:12px;border:none;background:var(--red);color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ DASHBOARD ══════ -->
+<div class="page page-admin" id="dashboard">
+  <div class="tbar">
+    <div style="width:30px;height:30px;border-radius:9px;background:var(--red);display:flex;align-items:center;justify-content:center">
+      <svg width="17" height="17" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M3 17c2.5-3 4.5-5 8-5s5.5 2 8-1"/><path d="M3 11c2.5-3 4.5-5 8-5s5.5 2 8-1"/></svg>
+    </div>
+    <div class="tbar-title">Shiro Closing</div>
+    <div id="sync-status" title="Status sinkronisasi" style="width:9px;height:9px;border-radius:50%;background:#e2e8f0;flex-shrink:0;transition:background .3s"></div>
+    <button class="ibtn" onclick="logout()"><svg width="15" height="15" fill="none" stroke="var(--ink2)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:16px 16px 24px;display:flex;flex-direction:column;gap:10px;max-width:1100px;margin:0 auto;width:100%">
+    <div>
+      <p style="color:var(--ink3);font-size:12px">Selamat pagi 👋</p>
+      <h1 style="font-size:19px;font-weight:800;color:var(--ink)">Dashboard</h1>
+      <p style="color:var(--ink3);font-size:11px;margin-top:1px" id="d-date"></p>
+    </div>
+
+    <!-- Tombol cepat -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button onclick="exportExcel()" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 8px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:var(--r-lg);cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;color:#166534">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Export Excel
+      </button>
+      <button onclick="nav('laporan')" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 8px;background:var(--red-l);border:1.5px solid var(--red-b);border-radius:var(--r-lg);cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;color:var(--red)">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
+        Lihat Laporan
+      </button>
+    </div>
+
+    <!-- 4 stat cards: omzet + target -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">
+      <div class="stat-card">
+        <p style="font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Omzet Hari Ini</p>
+        <p class="mono" style="font-size:16px;font-weight:800;color:var(--ink)" id="d-today">Rp 0</p>
+        <div class="prog"><div class="prog-f" id="d-today-bar" style="width:0%;background:var(--red)"></div></div>
+        <p style="font-size:10px;color:var(--ink3);margin-top:4px" id="d-today-pct">0% target harian</p>
+      </div>
+      <div class="stat-card">
+        <p style="font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Omzet Bulan Ini</p>
+        <p class="mono" style="font-size:16px;font-weight:800;color:var(--ink)" id="d-month">Rp 0</p>
+        <div class="prog"><div class="prog-f" id="d-month-bar" style="width:0%;background:var(--purple)"></div></div>
+        <p style="font-size:10px;color:var(--ink3);margin-top:4px" id="d-month-pct">0% target bulanan</p>
+      </div>
+      <div class="stat-card">
+        <p style="font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Target Harian</p>
+        <p class="mono" style="font-size:16px;font-weight:800;color:var(--ink)" id="d-target-daily">Rp 2jt</p>
+        <p style="font-size:10px;color:var(--ink3);margin-top:5px">Diatur di Pengaturan</p>
+      </div>
+      <div class="stat-card">
+        <p style="font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Target Bulanan</p>
+        <p class="mono" style="font-size:16px;font-weight:800;color:var(--ink)" id="d-target-month">Rp 45jt</p>
+        <p style="font-size:10px;color:var(--ink3);margin-top:5px">Diatur di Pengaturan</p>
+      </div>
+    </div>
+
+    <!-- Stat jumlah laporan -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="stat-card">
+        <p style="font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Laporan Hari Ini</p>
+        <p style="font-size:22px;font-weight:800;color:var(--ink)" id="d-cnt-today">0</p>
+        <p style="font-size:10px;color:var(--ink3);margin-top:3px">laporan</p>
+      </div>
+      <div class="stat-card">
+        <p style="font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Laporan Bulan Ini</p>
+        <p style="font-size:22px;font-weight:800;color:var(--ink)" id="d-cnt-month">0</p>
+        <p style="font-size:10px;color:var(--ink3);margin-top:3px">laporan</p>
+      </div>
+    </div>
+
+    <!-- Ringkasan hari ini vs bulan ini -->
+    <div class="card" style="padding:13px">
+      <p class="sec" style="margin-bottom:9px">Setoran Tunai</p>
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div class="data-row">
+          <span style="color:var(--ink2)">Hari Ini</span>
+          <span class="mono" style="font-weight:700;color:#f59e0b" id="d-st-today">Rp 0</span>
+        </div>
+        <div class="data-row" style="border-bottom:none">
+          <span style="color:var(--ink2)">Bulan Ini</span>
+          <span class="mono" style="font-weight:700;color:#f59e0b" id="d-st-month">Rp 0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:13px">
+      <p class="sec" style="margin-bottom:9px">Setoran Non Tunai</p>
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div class="data-row">
+          <span style="color:var(--ink2)">Hari Ini</span>
+          <span class="mono" style="font-weight:700;color:var(--purple)" id="d-sn-today">Rp 0</span>
+        </div>
+        <div class="data-row" style="border-bottom:none">
+          <span style="color:var(--ink2)">Bulan Ini</span>
+          <span class="mono" style="font-weight:700;color:var(--purple)" id="d-sn-month">Rp 0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:13px">
+      <p class="sec" style="margin-bottom:9px">Pemasukan Lain</p>
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div class="data-row">
+          <span style="color:var(--ink2)">Hari Ini</span>
+          <span class="mono" style="font-weight:700;color:var(--ok)" id="d-pm-today">Rp 0</span>
+        </div>
+        <div class="data-row" style="border-bottom:none">
+          <span style="color:var(--ink2)">Bulan Ini</span>
+          <span class="mono" style="font-weight:700;color:var(--ok)" id="d-pm-month">Rp 0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:13px">
+      <p class="sec" style="margin-bottom:9px">Pengeluaran</p>
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div class="data-row">
+          <span style="color:var(--ink2)">Hari Ini</span>
+          <span class="mono" style="font-weight:700;color:var(--red)" id="d-pk-today">Rp 0</span>
+        </div>
+        <div class="data-row" style="border-bottom:none">
+          <span style="color:var(--ink2)">Bulan Ini</span>
+          <span class="mono" style="font-weight:700;color:var(--red)" id="d-pk-month">Rp 0</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div id="bnav-d" class="bnav"></div>
+</div>
+
+<!-- ══════ LAPORAN ══════ -->
+<div class="page page-admin" id="laporan">
+  <div class="tbar">
+    <div style="width:30px;height:30px;border-radius:9px;background:var(--red);display:flex;align-items:center;justify-content:center"><svg width="17" height="17" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M3 17c2.5-3 4.5-5 8-5s5.5 2 8-1"/><path d="M3 11c2.5-3 4.5-5 8-5s5.5 2 8-1"/></svg></div>
+    <div class="tbar-title">Shiro Closing</div>
+    <button class="ibtn" onclick="logout()"><svg width="15" height="15" fill="none" stroke="var(--ink2)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:16px 16px 24px;display:flex;flex-direction:column;gap:9px;max-width:1100px;margin:0 auto;width:100%">
+    <div class="row">
+      <h1 style="font-size:19px;font-weight:800;color:var(--ink)">Laporan</h1>
+      <span class="badge" style="background:var(--red-l);color:var(--red)" id="lap-count">0 laporan</span>
+    </div>
+
+    <!-- Filter row -->
+    <div style="overflow-x:auto;display:flex;gap:6px;padding-bottom:2px">
+      <button class="filter-chip on" id="f-all"   onclick="setFilter('all')">Semua</button>
+      <button class="filter-chip"    id="f-today" onclick="setFilter('today')">Hari Ini</button>
+      <button class="filter-chip"    id="f-week"  onclick="setFilter('week')">7 Hari</button>
+      <button class="filter-chip"    id="f-month" onclick="setFilter('month')">Bulan Ini</button>
+      <button class="filter-chip"    id="f-custom" onclick="toggleCustomRange()">Custom</button>
+    </div>
+
+    <!-- Custom range (hidden by default) -->
+    <div id="custom-range" style="display:none;background:var(--white);border-radius:var(--r);padding:10px;border:1px solid var(--bg2);display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><label class="lbl">Dari</label><input class="inp" id="f-from" type="date" oninput="setFilter('custom')"/></div>
+        <div><label class="lbl">Sampai</label><input class="inp" id="f-to" type="date" oninput="setFilter('custom')"/></div>
+      </div>
+    </div>
+
+    <!-- Aggregate totals -->
+    <div class="card" style="padding:12px" id="lap-totals" style="display:none">
+      <p style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Total Periode</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px">
+        <div style="background:var(--bg);border-radius:var(--r);padding:9px">
+          <p style="font-size:10px;color:var(--ink3);margin-bottom:3px">Setoran Tunai</p>
+          <p style="font-family:'DM Mono',monospace;font-weight:700;font-size:13px;color:var(--ink)" id="lt-st">Rp 0</p>
+        </div>
+        <div style="background:var(--bg);border-radius:var(--r);padding:9px">
+          <p style="font-size:10px;color:var(--ink3);margin-bottom:3px">Setoran Non Tunai</p>
+          <p style="font-family:'DM Mono',monospace;font-weight:700;font-size:13px;color:var(--ink)" id="lt-sn">Rp 0</p>
+        </div>
+        <div style="background:var(--bg);border-radius:var(--r);padding:9px">
+          <p style="font-size:10px;color:var(--ink3);margin-bottom:3px">Total Omzet</p>
+          <p style="font-family:'DM Mono',monospace;font-weight:700;font-size:13px;color:var(--red)" id="lt-om">Rp 0</p>
+        </div>
+        <div style="background:var(--bg);border-radius:var(--r);padding:9px">
+          <p style="font-size:10px;color:var(--ink3);margin-bottom:3px">Pengeluaran</p>
+          <p style="font-family:'DM Mono',monospace;font-weight:700;font-size:13px;color:var(--red)" id="lt-pk">Rp 0</p>
+        </div>
+        <div style="background:#f0fdf4;border-radius:var(--r);padding:9px;grid-column:1/-1">
+          <p style="font-size:10px;color:#166534;margin-bottom:3px">Total Pemasukan Lain</p>
+          <p style="font-family:'DM Mono',monospace;font-weight:700;font-size:13px;color:var(--ok)" id="lt-pm">Rp 0</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="lap-list" class="lap-grid"></div>
+  </div>
+  <div id="bnav-l" class="bnav"></div>
+</div>
+
+<!-- ══════ DETAIL LAPORAN ══════ -->
+<div class="page" id="detail">
+  <div class="tbar">
+    <button class="ibtn" onclick="nav('laporan')"><svg width="17" height="17" fill="none" stroke="var(--ink)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg></button>
+    <div>
+      <div class="tbar-title">Detail Laporan</div>
+      <div class="tbar-sub" id="det-title-sub"></div>
+    </div>
+    <button class="ibtn" id="det-edit-btn" onclick="startEdit()" style="background:var(--red-l)">
+      <svg width="14" height="14" fill="none" stroke="var(--red)" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z"/></svg>
+    </button>
+  </div>
+  <div style="padding:16px;display:flex;flex-direction:column;gap:9px;max-width:720px;margin:0 auto;width:100%" id="det-content"></div>
+</div>
+
+<!-- ══════ SETTINGS ══════ -->
+<div class="page page-admin" id="settings">
+  <div class="tbar">
+    <div style="width:30px;height:30px;border-radius:9px;background:var(--red);display:flex;align-items:center;justify-content:center"><svg width="17" height="17" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M3 17c2.5-3 4.5-5 8-5s5.5 2 8-1"/><path d="M3 11c2.5-3 4.5-5 8-5s5.5 2 8-1"/></svg></div>
+    <div class="tbar-title">Shiro Closing</div>
+    <button class="ibtn" onclick="logout()"><svg width="15" height="15" fill="none" stroke="var(--ink2)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:16px 16px 24px;display:flex;flex-direction:column;gap:10px;max-width:720px;margin:0 auto;width:100%">
+    <h1 style="font-size:19px;font-weight:800;color:var(--ink)">Pengaturan</h1>
+    <div class="card" style="padding:13px">
+      <p class="sec" style="margin-bottom:11px">Nomor WhatsApp</p>
+      <div><label class="lbl">Nomor Tujuan Laporan</label><div class="inp-wrap"><span class="inp-pre">+</span><input class="inp mono" id="wa-num" placeholder="Contoh: 6281234567890"/></div></div>
+      <p style="font-size:11px;color:var(--ink3);margin-top:5px">Format internasional tanpa tanda +</p>
+    </div>
+    <div class="card" style="padding:13px">
+      <p class="sec" style="margin-bottom:11px">Target Omzet</p>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <div><label class="lbl">Target Harian</label><div class="inp-wrap"><span class="inp-pre">Rp</span><input class="inp mono" id="set-daily" value="2.000.000" oninput="fmt(this)"/></div></div>
+        <div><label class="lbl">Target Bulanan</label><div class="inp-wrap"><span class="inp-pre">Rp</span><input class="inp mono" id="set-monthly" value="45.000.000" oninput="fmt(this)"/></div></div>
+        <button class="btn btn-red" style="padding:13px;font-size:14px" onclick="saveSettings()">Simpan Target</button>
+      </div>
+    </div>
+    <div class="card" style="padding:13px">
+      <p class="sec" style="margin-bottom:11px">Login Admin</p>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <div><label class="lbl">Username Baru</label><input class="inp" id="set-user" placeholder="Kosongkan jika tidak diubah"/></div>
+        <div>
+          <label class="lbl">Password Baru</label>
+          <div style="position:relative">
+            <input class="inp" type="password" id="set-pass" placeholder="Min. 8 karakter" autocomplete="new-password" style="padding-right:44px"/>
+            <button type="button" onclick="togglePw('set-pass','eye-set')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;color:var(--ink3)">
+              <svg id="eye-set" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <button class="btn btn-white" style="font-size:14px;padding:12px" onclick="saveCredentials()">Simpan Kredensial</button>
+      </div>
+    </div>
+  </div>
+  <div id="bnav-s" class="bnav"></div>
+</div>
+
+</div><!-- /phone -->
+
+<!-- ══════ FOTO MODAL ══════ -->
+<div id="foto-modal" onclick="closeFotoModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:20px">
+  <img id="foto-modal-img" src="" style="max-width:100%;max-height:80vh;border-radius:12px;object-fit:contain"/>
+  <div style="display:flex;gap:12px">
+    <button onclick="closeFotoModal();event.stopPropagation()" style="padding:10px 20px;border-radius:10px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">Tutup</button>
+    <a id="foto-modal-dl" href="" download target="_blank" onclick="event.stopPropagation()" style="padding:10px 20px;border-radius:10px;background:#2563eb;border:none;color:#fff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:5px">
+      <svg width="13" height="13" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download
+    </a>
+  </div>
+  <p style="color:rgba(255,255,255,.5);font-size:11px">Tap di luar foto untuk menutup</p>
+</div>
+<script>
+// ═══════════════════════════════════════════════════════
+// SHIRO CLOSING v3.0 — Complete Logic
+// ═══════════════════════════════════════════════════════
+
+// ── Firebase Config ────────────────────────────────────
+var FIREBASE_CONFIG = {
+  apiKey: "AIzaSyA7T3kIfzMyamfi9RI4szH7cGzguofcb54",
+  authDomain: "shiro-closing.firebaseapp.com",
+  databaseURL: "https://shiro-closing-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "shiro-closing",
+  storageBucket: "shiro-closing.firebasestorage.app",
+  messagingSenderId: "392365836312",
+  appId: "1:392365836312:web:ad123e5f08a1f26cda5b6d"
+};
+
+// ── App State ──────────────────────────────────────────
+var SETTINGS   = {daily:2000000, monthly:45000000, waNum:''};
+var REPORTS    = [];
+var DB         = null;
+var STORAGE    = null; // Firebase Storage reference
+var ADMIN_SESSION = false;
+var ADMIN_CREDS   = {user:'admin', pass:'shiro123'};
+
+// ── Firebase Init ──────────────────────────────────────
+function initFirebase(){
+  try {
+    if(typeof firebase==='undefined'){loadLocalFallback();return;}
+    if(!firebase.apps||!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    DB = firebase.database();
+    STORAGE = firebase.storage();
+    // Connection indicator
+    DB.ref('.info/connected').on('value',function(s){showSyncStatus(s.val()?'online':'offline');});
+    // Load admin creds
+    DB.ref('admin_creds').once('value').then(function(s){var d=s.val();if(d&&d.user&&d.pass)ADMIN_CREDS=d;}).catch(function(){});
+    // Load settings dengan realtime listener — agar waNum selalu up-to-date di semua device
+    DB.ref('settings').on('value', function(s){
+      var d=s.val();
+      if(d) SETTINGS=Object.assign(SETTINGS,d);
+      // Sync ke input field jika Settings page sedang terbuka
+      var el=G('wa-num'); if(el&&SETTINGS.waNum) el.value=SETTINGS.waNum;
+    }, function(e){ console.error('Settings listener:', e.message); });
+    // Realtime reports listener
+    DB.ref('reports').orderByChild('createdAt').on('value',function(snap){
+      REPORTS=[];
+      snap.forEach(function(c){var r=c.val();if(r&&r.id)REPORTS.unshift(r);});
+      refreshCurrentPage();
+    },function(err){console.error('Listener:',err.message);showSyncStatus('error');loadLocalFallback();});
+  } catch(e){console.error('Firebase init:',e);loadLocalFallback();}
+}
+
+function refreshCurrentPage(){
+  try{
+    if(isShowing('dashboard')) initDashboard();
+    if(isShowing('laporan'))   renderLaporan();
+  }catch(e){}
+}
+function isShowing(id){var e=G(id);return e&&e.classList.contains('show');}
+function showSyncStatus(s){
+  var el=G('sync-status'); if(!el)return;
+  el.style.background=s==='online'?'#16a34a':s==='offline'?'#f59e0b':'#dc2626';
+  el.title=s==='online'?'Terhubung - data realtime':s==='offline'?'Offline':'Error koneksi';
+}
+function loadLocalFallback(){
+  try{
+    var r=localStorage.getItem('sc_reports'); if(r)REPORTS=JSON.parse(r);
+    // Hanya load settings lokal jika Firebase belum berhasil mengisi waNum
+    // Ini mencegah nomor lama dari localStorage menimpa nomor baru dari Firebase
+    if(!SETTINGS.waNum){
+      var s=localStorage.getItem('sc_settings');
+      if(s){
+        var local=JSON.parse(s);
+        // Hanya ambil waNum dari lokal jika Firebase belum isi
+        if(local.waNum) SETTINGS.waNum=local.waNum;
+        if(local.daily)   SETTINGS.daily=local.daily;
+        if(local.monthly) SETTINGS.monthly=local.monthly;
+      }
+    }
+  }catch(e){}
+}
+function saveOneReport(report){
+  try{
+    var idx=REPORTS.findIndex(function(r){return r.id===report.id;});
+    if(idx===-1)REPORTS.unshift(report); else REPORTS[idx]=report;
+    localStorage.setItem('sc_reports',JSON.stringify(REPORTS));
+  }catch(e){}
+  if(DB) DB.ref('reports/'+report.id).set(report).catch(function(e){console.error('Save:',e);});
+}
+function deleteReportFromDB(id){
+  REPORTS=REPORTS.filter(function(r){return r.id!==id;});
+  try{localStorage.setItem('sc_reports',JSON.stringify(REPORTS));}catch(e){}
+  if(DB) DB.ref('reports/'+id).remove().catch(function(e){console.error('Del:',e);});
+}
+function saveSettingsData(){
+  // Firebase adalah sumber kebenaran — simpan ke sana dulu
+  if(DB){
+    DB.ref('settings').set(SETTINGS).then(function(){
+      // Baru simpan ke localStorage sebagai cache lokal
+      try{localStorage.setItem('sc_settings',JSON.stringify(SETTINGS));}catch(e){}
+    }).catch(function(e){
+      console.error('Settings save:', e);
+      // Tetap simpan ke localStorage jika Firebase gagal
+      try{localStorage.setItem('sc_settings',JSON.stringify(SETTINGS));}catch(e2){}
+    });
+  } else {
+    // Offline: simpan ke localStorage saja
+    try{localStorage.setItem('sc_settings',JSON.stringify(SETTINGS));}catch(e){}
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────
+function G(id){return document.getElementById(id);}
+function ST(id,v){var e=G(id);if(e)e.textContent=v;}
+function toRp(n){return 'Rp '+(Number(n)||0).toLocaleString('id-ID');}
+function fmt(el){if(!el||typeof el.value==='undefined')return;var s=String(el.value||'');var n=parseInt(s.replace(/\D/g,'')||'0',10);el.value=n?n.toLocaleString('id-ID'):'';}
+function pRp(v){try{return parseInt(String(v||'').replace(/\D/g,'')||'0',10)||0;}catch(e){return 0;}}
+function todayStr(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+function nowStr(){var n=new Date();return ('0'+n.getHours()).slice(-2)+':'+('0'+n.getMinutes()).slice(-2)+' WIB';}
+function fmtDate(s){try{return new Date(s+'T00:00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}catch(e){return s;}}
+function fmtDateShort(s){try{var p=s.split('-');return p[2]+'/'+p[1]+'/'+p[0];}catch(e){return s;}}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+
+// ── Bottom Nav ─────────────────────────────────────────
+var NAV_TABS=[
+  {id:'dashboard',label:'Dashboard',icon:'<rect x="2" y="2" width="9" height="9" rx="1.5"/><rect x="13" y="2" width="9" height="9" rx="1.5"/><rect x="2" y="13" width="9" height="9" rx="1.5"/><rect x="13" y="13" width="9" height="9" rx="1.5"/>'},
+  {id:'laporan',  label:'Laporan',  icon:'<path d="M9 12h6m-6 4h6M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/>'},
+  {id:'settings', label:'Pengaturan',icon:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>'}
+];
+function buildNav(activeId,containerId){
+  var w=G(containerId);if(!w)return;w.innerHTML='';
+  NAV_TABS.forEach(function(t){
+    var b=document.createElement('button');b.className='btab'+(t.id===activeId?' on':'');
+    b.style.color=t.id===activeId?'var(--red)':'var(--ink3)';
+    b.innerHTML='<svg fill="none" stroke="currentColor" stroke-width="'+(t.id===activeId?'2.5':'2')+'" viewBox="0 0 24 24">'+t.icon+'</svg>';
+    b.appendChild(document.createTextNode(t.label));
+    b.onclick=(function(id){return function(){nav(id);};})(t.id);
+    w.appendChild(b);
+  });
+}
+
+// ── Navigation ─────────────────────────────────────────
+var PAGES=['home','kasir','sukses','login','dashboard','laporan','detail','settings'];
+function nav(name){
+  try{
+    PAGES.forEach(function(id){var e=G(id);if(e){e.classList.remove('show');e.scrollTop=0;}});
+    var t=G(name);if(t)t.classList.add('show');
+    if(name==='kasir')     try{initKasirForm();}catch(e){console.error(e);}
+    if(name==='dashboard') try{initDashboard();}catch(e){console.error(e);}
+    if(name==='laporan')   try{initLaporan();}catch(e){console.error(e);}
+    if(name==='settings')  try{initSettings();}catch(e){console.error(e);}
+    if(name==='login')     try{clearLoginForm();initLoginPage();}catch(e){console.error(e);}
+  }catch(e){console.error('nav:',e);}
+}
+function logout(){
+  ADMIN_SESSION=false;
+  try{sessionStorage.removeItem('sc_session');}catch(e){}
+  clearLoginForm();
+  nav('login');
+}
+
+// ── Form State ─────────────────────────────────────────
+var SHIFT=1;
+var L={pm:[],pk:[]};
+var S1_SNAP=null;
+var LAST_REPORT=null;
+
+function setShift(n){
+  SHIFT=n;
+  var c1=G('chip-s1'),c2=G('chip-s2');
+  if(c1)c1.classList.toggle('on',n===1);
+  if(c2)c2.classList.toggle('on',n===2);
+  updateShift2UI();
+}
+function updateDateDisplay(){
+  var d=G('k-date'),el=G('k-date-display');
+  if(d&&el)el.textContent=d.value?fmtDate(d.value):'';
+}
+function getS1ForDate(dateStr){
+  return REPORTS.find(function(r){return r.date===dateStr&&r.shift===1;})||null;
+}
+
+// ── Shift 2 UI ─────────────────────────────────────────
+function updateShift2UI(){
+  try{
+    var banner=G('shift2-banner');
+    var diffCard=G('diff-card');
+    var dateStr=(G('k-date')&&G('k-date').value)||todayStr();
+    if(SHIFT===2){
+      var s1=getS1ForDate(dateStr);
+      S1_SNAP=s1;
+      if(s1){
+        if(banner){
+          banner.style.display='block';
+          banner.innerHTML='<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:var(--r);padding:11px 13px">'
+            +'<p style="font-weight:700;color:#92400e;font-size:12px;margin-bottom:8px">⚡ Data Shift 1 Tersimpan · '+fmtDateShort(dateStr)+'</p>'
+            +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:11px;color:#78350f">'
+            +'<span>Tunai: <b>'+toRp(s1.tunai)+'</b></span>'
+            +'<span>QRIS: <b>'+toRp(s1.qris)+'</b></span>'
+            +'<span>Transfer: <b>'+toRp(s1.transfer)+'</b></span>'
+            +'<span>EDC: <b>'+toRp(s1.edc)+'</b></span>'
+            +'</div>'
+            +'<p style="font-size:11px;color:#92400e;margin-top:7px">Isi angka <b>total terbaru</b> dari kasir app. Shift 2 = Input − Shift 1.</p>'
+            +'</div>';
+        }
+        if(diffCard) diffCard.style.display='block';
+      } else {
+        // Tidak ada Shift 1 → izinkan input sebagai Closing Akhir Hari
+        if(banner){
+          banner.style.display='block';
+          banner.innerHTML='<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--r);padding:11px 13px;font-size:12px;color:#1d4ed8">'
+            +'<p style="font-weight:700;margin-bottom:3px">ℹ️ Tidak ada Shift 1 untuk tanggal ini</p>'
+            +'<p>Data akan disimpan sebagai <b>Closing Akhir Hari</b> (tanpa kalkulasi selisih).</p>'
+            +'</div>';
+        }
+        if(diffCard) diffCard.style.display='none';
+      }
+    } else {
+      S1_SNAP=null;
+      if(banner) banner.style.display='none';
+      if(diffCard) diffCard.style.display='none';
+    }
+    recalc();
+  }catch(e){console.error('updateShift2UI:',e);}
+}
+
+// ── Kasir Form Init ────────────────────────────────────
+function initKasirForm(){
+  L={pm:[],pk:[]};
+  var d=G('k-date');if(d){d.value=todayStr();updateDateDisplay();}
+  var n=G('k-name');if(n)n.value='';
+  ['k-tunai','k-qris','k-transfer','k-edc','k-pc-awal','k-pc-akhir'].forEach(function(id){var e=G(id);if(e)e.value='';});
+  G('pm-list').innerHTML='';
+  G('pk-list').innerHTML='';
+  S1_SNAP=null;
+  var banner=G('shift2-banner');if(banner)banner.style.display='none';
+  var diffCard=G('diff-card');if(diffCard)diffCard.style.display='none';
+  setShift(1);recalc();
+}
+
+// ── Line Items ─────────────────────────────────────────
+function addLine(t){L[t].push({k:'',n:0,jenis:'tunai',foto:null});drawLines(t);}
+function rmLine(t,i){L[t].splice(i,1);drawLines(t);}
+function setJenis(t,i,jenis){
+  if(!L[t]||!L[t][i])return;
+  L[t][i].jenis=jenis;
+  var wrap=G(t+'-item-'+i);
+  if(wrap){wrap.querySelectorAll('.jbtn').forEach(function(b){
+    var a=b.getAttribute('data-jenis')===jenis;
+    b.className='jbtn'+(a?(jenis==='tunai'?' t-on':' n-on'):'');
+  });}
+  recalc();
+}
+
+function drawLines(t){
+  var el=G(t+'-list');if(!el)return;el.innerHTML='';
+  (L[t]||[]).forEach(function(it,i){
+    var w=document.createElement('div');w.className='li';w.id=t+'-item-'+i;
+
+    // Row 1: keterangan + hapus
+    var r1=document.createElement('div');r1.style.cssText='display:flex;gap:6px;margin-bottom:7px';
+    var ki=document.createElement('input');ki.className='inp';ki.style.cssText='flex:1;font-size:13px;padding:8px 10px';
+    ki.placeholder='Keterangan...';ki.value=it.k||'';
+    ki.oninput=(function(tt,ii){return function(){L[tt][ii].k=this.value;};})(t,i);r1.appendChild(ki);
+    var db=document.createElement('button');
+    db.style.cssText='width:32px;height:32px;border-radius:9px;background:var(--red-l);border:1px solid var(--red-b);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0';
+    db.innerHTML='<svg width="12" height="12" fill="none" stroke="var(--red)" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>';
+    db.onclick=(function(tt,ii){return function(){rmLine(tt,ii);};})(t,i);r1.appendChild(db);w.appendChild(r1);
+
+    // Row 2: nominal
+    var pw=document.createElement('div');pw.className='inp-wrap';pw.style.marginBottom='7px';
+    var ps=document.createElement('span');ps.className='inp-pre';ps.style.fontSize='11px';ps.textContent='Rp';pw.appendChild(ps);
+    var ni=document.createElement('input');ni.className='inp mono';ni.style.cssText='padding:8px 10px 8px 30px;font-size:13px';
+    ni.placeholder='0';ni.value=it.n?it.n.toLocaleString('id-ID'):'';
+    ni.oninput=(function(tt,ii){return function(){fmt(this);L[tt][ii].n=pRp(this.value);recalc();};})(t,i);pw.appendChild(ni);w.appendChild(pw);
+
+    // Row 3: jenis
+    var r3=document.createElement('div');r3.style.cssText='display:flex;gap:6px;margin-bottom:7px';
+    function mkJ(jenis,label){
+      var a=(it.jenis===jenis);var b=document.createElement('button');
+      b.className='jbtn'+(a?(jenis==='tunai'?' t-on':' n-on'):'');
+      b.setAttribute('data-jenis',jenis);b.textContent=label;
+      b.onclick=(function(tt,ii,jj){return function(){setJenis(tt,ii,jj);};})(t,i,jenis);return b;
+    }
+    r3.appendChild(mkJ('tunai','💵 Tunai'));r3.appendChild(mkJ('nontunai','💳 Non Tunai'));
+    w.appendChild(r3);
+
+    // Row 4: foto nota (hanya pengeluaran)
+    if(t==='pk'){
+      var frow=document.createElement('div');frow.style.cssText='display:flex;align-items:center;gap:8px';
+      var flbl=document.createElement('label');
+      flbl.style.cssText='display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--ink2);font-family:inherit;background:var(--bg);border:1.5px solid var(--bg2);border-radius:9px;padding:6px 10px;flex-shrink:0';
+      flbl.innerHTML='<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>Foto Nota';
+      var finp=document.createElement('input');finp.type='file';finp.accept='image/*';finp.style.display='none';
+      finp.onchange=(function(tt,ii,lbl){return function(){
+        var file=this.files[0];if(!file)return;
+        // Validasi ukuran (max 5MB)
+        if(file.size > 5*1024*1024){
+          alert('Ukuran foto maksimal 5MB.'); return;
+        }
+        lbl.innerHTML='<span style="color:var(--ink3)">Mengupload...</span>';
+        uploadFotoNota(file, function(url, err){
+          if(err){
+            lbl.innerHTML='<svg width="13" height="13" fill="none" stroke="var(--red)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><span style="color:var(--red)">Gagal upload</span>';
+            console.error('Upload foto:', err);
+            return;
+          }
+          L[tt][ii].foto=url; // simpan download URL, bukan base64
+          lbl.innerHTML='<svg width="13" height="13" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span style="color:#16a34a">Foto OK</span>';
+          // Update thumbnail realtime
+          var thumbEl=document.getElementById('thumb-'+tt+'-'+ii);
+          if(thumbEl){thumbEl.src=url;thumbEl.style.display='block';}
+        });
+      };})(t,i,flbl);
+      flbl.appendChild(finp);
+      // Restore existing photo
+      if(it.foto){flbl.innerHTML='<svg width="13" height="13" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span style="color:#16a34a">Foto OK</span>';}
+      frow.appendChild(flbl);
+      // Preview thumbnail
+      var thumb=document.createElement('img');
+      thumb.id='thumb-'+t+'-'+i;
+      thumb.style.cssText='width:36px;height:36px;border-radius:8px;object-fit:cover;border:1px solid var(--bg2);display:'+(it.foto?'block':'none');
+      if(it.foto) thumb.src=it.foto;
+      frow.appendChild(thumb);
+      w.appendChild(frow);
+    }
+    el.appendChild(w);
+  });
+  recalc();
+}
+
+// ── Upload Foto ke Firebase Storage ───────────────────────
+function uploadFotoNota(file, callback){
+  // Selalu coba Storage jika tersedia
+  if(STORAGE){
+    var ext = (file.name||'foto').split('.').pop().replace(/[^a-z0-9]/gi,'').toLowerCase()||'jpg';
+    var path = 'nota/'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
+    console.log('[Upload] Mulai upload ke Storage path:', path);
+    var ref = STORAGE.ref(path);
+    ref.put(file)
+      .then(function(snap){
+        console.log('[Upload] Upload selesai, mengambil download URL...');
+        return snap.ref.getDownloadURL();
+      })
+      .then(function(url){
+        console.log('[Upload] Download URL berhasil:', url.slice(0,60)+'...');
+        callback(url, null);
+      })
+      .catch(function(err){
+        console.error('[Upload] Storage error:', err.code, err.message);
+        // Fallback ke base64
+        _readAsBase64(file, callback);
+      });
+  } else {
+    console.warn('[Upload] STORAGE null, pakai base64 fallback');
+    _readAsBase64(file, callback);
+  }
+}
+
+function _readAsBase64(file, callback){
+  var r=new FileReader();
+  r.onload=function(e){callback(e.target.result, null);};
+  r.onerror=function(e){callback(null,'FileReader gagal: '+e.target.error);};
+  r.readAsDataURL(file);
+}
+
+// ── Screenshot POS ─────────────────────────────────────────
+var POS_URL   = '';
+var POS_READY = false;
+
+function handlePosUpload(input){
+  var file = input.files[0];
+  if(!file){ console.warn('[POS] Tidak ada file dipilih'); return; }
+
+  console.log('[POS] File dipilih:', file.name, Math.round(file.size/1024)+'KB', file.type);
+
+  if(file.size > 10*1024*1024){
+    alert('Ukuran screenshot maksimal 10MB.\nFile ini: '+Math.round(file.size/1024/1024*10)/10+' MB');
+    input.value=''; return;
+  }
+
+  var stat = G('pos-status');
+  var lbl  = G('pos-upload-label');
+
+  // Step 1: Baca file lokal dulu (cepat, tidak butuh internet)
+  console.log('[POS] Membaca file lokal...');
+  _readAsBase64(file, function(base64, err){
+    if(err){
+      console.error('[POS] FileReader gagal:', err);
+      if(stat) stat.innerHTML='<span style="color:var(--red)">❌ Gagal membaca file. Coba lagi.</span>';
+      POS_URL=''; POS_READY=false; updateSubmitBtn(); return;
+    }
+
+    console.log('[POS] Preview lokal siap, ukuran base64:', Math.round(base64.length/1024)+'KB');
+
+    // Tampilkan preview
+    var prev=G('pos-preview-img');
+    if(prev) prev.src=base64;
+    var pw=G('pos-preview-wrap'); if(pw) pw.style.display='block';
+    if(lbl) lbl.style.display='none';
+
+    // Aktifkan tombol segera dengan base64 — kasir tidak diblokir
+    POS_URL   = base64;
+    POS_READY = true;
+    updateSubmitBtn();
+
+    // Step 2: Upload ke Storage di background (tidak memblokir kasir)
+    if(STORAGE){
+      if(stat) stat.innerHTML='<span style="color:#f59e0b;font-weight:700">⏳ Menyinkron ke server...</span>';
+      console.log('[POS] Mulai upload ke Firebase Storage...');
+
+      var ext=(file.name||'pos').split('.').pop().replace(/[^a-z0-9]/gi,'').toLowerCase()||'jpg';
+      var path='pos/'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
+      var ref=STORAGE.ref(path);
+
+      ref.put(file)
+        .then(function(snap){
+          console.log('[POS] Upload selesai, byte:', snap.bytesTransferred);
+          return snap.ref.getDownloadURL();
+        })
+        .then(function(url){
+          console.log('[POS] URL berhasil:', url.slice(0,60)+'...');
+          POS_URL=url; // ganti base64 dengan URL Storage
+          if(stat) stat.innerHTML='<span style="color:#16a34a;font-weight:700">✓ Tersimpan di server</span>';
+        })
+        .catch(function(e){
+          console.error('[POS] Storage upload gagal:', e.code, e.message);
+          // Base64 sudah tersimpan, laporan tetap bisa disimpan
+          var msg=_storageErrMsg(e.code||e.message);
+          if(stat) stat.innerHTML='<span style="color:#f59e0b;font-weight:700">⚠️ '+msg+'</span>';
+        });
+    } else {
+      console.warn('[POS] Firebase Storage belum siap, pakai base64');
+      if(stat) stat.innerHTML='<span style="color:#f59e0b;font-weight:700">⚠️ Offline — tersimpan lokal</span>';
+    }
+  });
+}
+
+function _storageErrMsg(code){
+  if(!code) return 'Gagal sinkron server';
+  if(code.indexOf('unauthorized')>=0||code.indexOf('permission')>=0)
+    return 'Izin Storage ditolak — periksa Rules Firebase';
+  if(code.indexOf('canceled')>=0)   return 'Upload dibatalkan';
+  if(code.indexOf('network')>=0)    return 'Koneksi bermasalah';
+  if(code.indexOf('quota')>=0)      return 'Storage penuh';
+  return 'Gagal sinkron: '+code.slice(0,40);
+}
+
+function clearPosUpload(){
+  POS_URL = ''; POS_READY = false;
+  var fi = G('pos-file');   if(fi) fi.value = '';
+  var pw = G('pos-preview-wrap'); if(pw) pw.style.display = 'none';
+  var pl = G('pos-upload-label'); if(pl) pl.style.display = 'flex';
+  var st = G('pos-status'); if(st) st.textContent = 'Belum diunggah';
+  updateSubmitBtn();
+}
+
+function updateSubmitBtn(){
+  var btn  = G('submit-btn');
+  var hint = G('submit-hint');
+  if(!btn) return;
+  if(POS_READY){
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor  = 'pointer';
+    btn.style.removeProperty = undefined; // kosongkan
+    if(hint) hint.style.display = 'none';
+  } else {
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    btn.style.cursor  = 'not-allowed';
+    if(hint) { hint.style.display = 'block'; }
+  }
+}
+
+// ── Recalc ──────────────────────────────────────────────
+function recalc(){try{
+  var rawT=pRp((G('k-tunai')||{}).value),rawQ=pRp((G('k-qris')||{}).value);
+  var rawTf=pRp((G('k-transfer')||{}).value),rawE=pRp((G('k-edc')||{}).value);
+  var s1=S1_SNAP;
+  // Nilai aktual shift: jika Shift 2 dengan S1, kurangi S1
+  var tunai  = (SHIFT===2&&s1) ? rawT -s1.tunai    : rawT;
+  var qris   = (SHIFT===2&&s1) ? rawQ -s1.qris     : rawQ;
+  var tf     = (SHIFT===2&&s1) ? rawTf-s1.transfer : rawTf;
+  var edc    = (SHIFT===2&&s1) ? rawE -s1.edc      : rawE;
+
+  var pmT=0,pmN=0,pkT=0,pkN=0,pmA=0,pkA=0;
+  (L.pm||[]).forEach(function(it){pmA+=it.n||0;if(it.jenis==='tunai')pmT+=it.n||0;else pmN+=it.n||0;});
+  (L.pk||[]).forEach(function(it){pkA+=it.n||0;if(it.jenis==='tunai')pkT+=it.n||0;else pkN+=it.n||0;});
+
+  // Untuk ringkasan owner:
+  // Shift 1: gunakan nilai Shift 2 saja (normal)
+  // Shift 2 dengan S1: gunakan rawT/rawQ/rawTf/rawE (total akhir hari) agar owner lihat TOTAL HARIAN
+  var baseT  = (SHIFT===2&&s1) ? rawT  : tunai;
+  var baseQ  = (SHIFT===2&&s1) ? rawQ  : qris;
+  var baseTf = (SHIFT===2&&s1) ? rawTf : tf;
+  var baseE  = (SHIFT===2&&s1) ? rawE  : edc;
+
+  // Setoran Tunai (owner) = Total Akhir Hari Tunai + PemasukanTunai - PengeluaranTunai
+  var setoranT   = baseT + pmT - pkT;
+  // Setoran Non Tunai (owner) = Total Akhir Hari Non-Tunai + PemasukanNT - PengeluaranNT
+  var setoranN   = baseQ + baseTf + baseE + pmN - pkN;
+  // Total Omzet (owner) = Total Akhir Hari semua channel
+  var omzetTotal = baseT + baseQ + baseTf + baseE;
+
+  // Update ringkasan
+  ST('s-tunai', toRp(setoranT));
+  var ste=G('s-tunai'); if(ste) ste.style.color = setoranT < 0 ? 'var(--red)' : '#d97706';
+  if(SHIFT===2&&s1){
+    ST('s-tunai-detail', 'S1: '+toRp(s1.tunai)+' + S2: '+toRp(tunai)+(pmT?' + Pms: '+toRp(pmT):'')+(pkT?' - Klr: '+toRp(pkT):''));
+  } else {
+    ST('s-tunai-detail', 'Tunai: '+toRp(tunai)+(pmT?' + Pms: '+toRp(pmT):'')+(pkT?' - Klr: '+toRp(pkT):''));
+  }
+  ST('s-nontunai', toRp(setoranN));
+  var sne=G('s-nontunai'); if(sne) sne.style.color = setoranN < 0 ? 'var(--red)' : 'var(--purple)';
+  if(SHIFT===2&&s1){
+    ST('s-nontunai-detail', 'QRIS: '+toRp(baseQ)+' · Tf: '+toRp(baseTf)+' · EDC: '+toRp(baseE)+'(total hari)');
+  } else {
+    ST('s-nontunai-detail', 'QRIS: '+toRp(qris)+' · Tf: '+toRp(tf)+' · EDC: '+toRp(edc)+(pmN?' + Pms: '+toRp(pmN):'')+(pkN?' - Klr: '+toRp(pkN):''));
+  }
+  ST('s-om', toRp(omzetTotal));
+  ST('s-pm', toRp(pmA));
+  ST('s-pk', '- '+toRp(pkA));
+
+  // Diff preview for Shift 2
+  if(SHIFT===2&&s1){
+    var diffBody=G('diff-body');
+    if(diffBody){
+      var fields=[
+        {l:'Tunai',   raw:rawT, s1v:s1.tunai,    diff:tunai},
+        {l:'QRIS',    raw:rawQ, s1v:s1.qris,     diff:qris},
+        {l:'Transfer',raw:rawTf,s1v:s1.transfer, diff:tf},
+        {l:'EDC',     raw:rawE, s1v:s1.edc,      diff:edc},
+      ];
+      diffBody.innerHTML='';
+      fields.forEach(function(f){
+        var row=document.createElement('div');
+        row.style.cssText='display:flex;align-items:center;font-size:12px;padding:5px 0;border-bottom:1px solid var(--bg2)';
+        var lbl=document.createElement('span');lbl.style.cssText='flex:1;color:var(--ink2);font-weight:600';lbl.textContent=f.l;row.appendChild(lbl);
+        function cell(txt,col){var s=document.createElement('span');s.className='mono';s.style.cssText='min-width:65px;text-align:right;color:'+col;s.textContent=txt;return s;}
+        function sep(t){var s=document.createElement('span');s.style.cssText='color:var(--ink3);margin:0 4px;font-size:10px';s.textContent=t;return s;}
+        row.appendChild(cell(toRp(f.raw),'var(--ink3)'));
+        row.appendChild(sep('-'));
+        row.appendChild(cell(toRp(f.s1v),'var(--ink3)'));
+        row.appendChild(sep('='));
+        row.appendChild(cell(toRp(f.diff),f.diff>=0?'var(--ok)':'var(--red)'));
+        diffBody.appendChild(row);
+      });
+    }
+  }
+}catch(e){console.error('recalc:',e);}}
+
+// ── Submit ──────────────────────────────────────────────
+function doSubmit(){try{
+  var kname = G('k-name');
+  if(!kname || !kname.value.trim()){
+    alert('Nama kasir belum diisi.');
+    if(kname) kname.focus();
+    return;
+  }
+  var name = kname.value.trim();
+  var date=(G('k-date')&&G('k-date').value)||todayStr();
+  var rawT=pRp((G('k-tunai')||{}).value),rawQ=pRp((G('k-qris')||{}).value);
+  var rawTf=pRp((G('k-transfer')||{}).value),rawE=pRp((G('k-edc')||{}).value);
+  var s1=S1_SNAP;
+  var tunai=(SHIFT===2&&s1)?rawT-s1.tunai:rawT;
+  var qris=(SHIFT===2&&s1)?rawQ-s1.qris:rawQ;
+  var tf=(SHIFT===2&&s1)?rawTf-s1.transfer:rawTf;
+  var edc=(SHIFT===2&&s1)?rawE-s1.edc:rawE;
+
+  var pmT=0,pmN=0,pkT=0,pkN=0,pmA=0,pkA=0;
+  (L.pm||[]).forEach(function(it){pmA+=it.n||0;if(it.jenis==='tunai')pmT+=it.n||0;else pmN+=it.n||0;});
+  (L.pk||[]).forEach(function(it){pkA+=it.n||0;if(it.jenis==='tunai')pkT+=it.n||0;else pkN+=it.n||0;});
+
+  // Nilai Shift 2 (selisih) — untuk tabel diff, tidak berubah
+  var setoranT_s2 = tunai + pmT - pkT;
+  var setoranN_s2 = qris + tf + edc + pmN - pkN;
+  var omzet_s2    = tunai + qris + tf + edc;
+
+  // Total harian (yang disimpan sebagai setoranTunai/Non Tunai/totalOmzet)
+  // Shift 1: nilai normal. Shift 2 dengan S1: gunakan rawT (total akhir hari)
+  var baseT  = (SHIFT===2&&s1) ? rawT  : tunai;
+  var baseQ  = (SHIFT===2&&s1) ? rawQ  : qris;
+  var baseTf = (SHIFT===2&&s1) ? rawTf : tf;
+  var baseE  = (SHIFT===2&&s1) ? rawE  : edc;
+  var setoranT   = baseT  + pmT - pkT;
+  var setoranN   = baseQ  + baseTf + baseE + pmN - pkN;
+  var omzetTotal = baseT  + baseQ  + baseTf + baseE;
+
+  var pcAwal  = pRp((G('k-pc-awal') ||{}).value);
+  var pcAkhir = pRp((G('k-pc-akhir')||{}).value);
+
+  var report={
+    id:uid(), kasir:name, date:date, shift:SHIFT, jam:nowStr(),
+    // Nilai shift aktual (selisih untuk Shift 2)
+    tunai:tunai, qris:qris, transfer:tf, edc:edc,
+    // Raw input = total akhir hari (selalu disimpan)
+    rawTunai:rawT, rawQris:rawQ, rawTransfer:rawTf, rawEdc:rawE,
+    pemasukan:JSON.parse(JSON.stringify(L.pm)),
+    pengeluaran:JSON.parse(JSON.stringify(L.pk)),
+    totalPemasukan:pmA, totalPengeluaran:pkA,
+    // Setoran & omzet = TOTAL HARIAN (untuk laporan owner)
+    setoranTunai:setoranT, setoranNonTunai:setoranN,
+    totalOmzet:omzetTotal,
+    // Nilai Shift 2 saja (untuk referensi)
+    tunaiS2:tunai, qrisS2:qris, transferS2:tf, edcS2:edc,
+    setoranTunaiS2:setoranT_s2, setoranNonTunaiS2:setoranN_s2, omzetS2:omzet_s2,
+    pettyCashAwal:pcAwal, pettyCashAkhir:pcAkhir,
+    s1Ref:s1?{tunai:s1.tunai,qris:s1.qris,transfer:s1.transfer,edc:s1.edc}:null,
+    createdAt:new Date().toISOString(),
+    // Verifikasi POS
+    posScreenshot:null,
+    posUploadedAt:null
+  };
+  saveOneReport(report);
+  LAST_REPORT=report;
+  showSukses(report);
+}catch(e){console.error('doSubmit:',e);alert('Gagal menyimpan: '+e.message);}}
+
+// ── Sukses ──────────────────────────────────────────────
+function showSukses(r){
+  var badge=G('sukses-badge');
+  if(badge)badge.innerHTML='<span class="badge" style="background:'+(r.shift===1?'#fef3c7':'#ede9fe')+';color:'+(r.shift===1?'#92400e':'#5b21b6')+'">Shift '+r.shift+'</span>';
+  ST('r-kasir',r.kasir);ST('r-tgl',fmtDateShort(r.date));
+  ST('r-shift','Shift '+r.shift);ST('r-jam',r.jam);
+  ST('r-tunai',toRp(r.tunai));ST('r-qris',toRp(r.qris));
+  ST('r-transfer',toRp(r.transfer));ST('r-edc',toRp(r.edc));
+  ST('r-st',toRp(r.setoranTunai));ST('r-sn',toRp(r.setoranNonTunai));
+  ST('r-om',toRp(r.totalOmzet));
+  ST('r-pk','- '+toRp(r.totalPengeluaran));
+  ST('r-pm-val',toRp(r.totalPemasukan));
+  // Untuk Shift 2: update label tunai/qris/etc ke nilai total harian
+  if(r.shift===2&&r.s1Ref){
+    var s1r=r.s1Ref;
+    ST('r-tunai',   toRp(r.rawTunai||0)   +' (S1:'+toRp(s1r.tunai)+' S2:'+toRp(r.tunai)+')');
+    ST('r-qris',    toRp(r.rawQris||0)    +' (S1:'+toRp(s1r.qris)+' S2:'+toRp(r.qris)+')');
+    ST('r-transfer',toRp(r.rawTransfer||0)+' (S1:'+toRp(s1r.transfer)+' S2:'+toRp(r.transfer)+')');
+    ST('r-edc',     toRp(r.rawEdc||0)     +' (S1:'+toRp(s1r.edc)+' S2:'+toRp(r.edc)+')');
+  }
+  // Petty Cash — tampilkan hanya jika ada nilai
+  var hasPc = (r.pettyCashAwal||0) > 0 || (r.pettyCashAkhir||0) > 0;
+  var pcDiv  = G('r-pc-divider');   if(pcDiv)  pcDiv.style.display  = hasPc ? '' : 'none';
+  var pcRow  = G('r-pc-row');       if(pcRow)  pcRow.style.display  = hasPc ? '' : 'none';
+  var pcARow = G('r-pc-akhir-row'); if(pcARow) pcARow.style.display = hasPc ? '' : 'none';
+  if(hasPc){
+    ST('r-pc-awal', toRp(r.pettyCashAwal||0));
+    ST('r-pc-akhir',toRp(r.pettyCashAkhir||0));
+  }
+  // Show pengeluaran list with photos
+  var pkl=G('r-pk-list');
+  if(pkl&&r.pengeluaran&&r.pengeluaran.length){
+    pkl.innerHTML='<div style="height:1px;background:var(--bg2);margin:6px 0"></div>'
+      +'<p style="font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Detail Pengeluaran</p>';
+    r.pengeluaran.forEach(function(p){
+      var d=document.createElement('div');
+      d.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bg2);font-size:12px';
+      d.innerHTML='<span style="flex:1;color:var(--ink2)">'+p.k+'</span>'
+        +'<span style="font-size:10px;background:'+(p.jenis==='tunai'?'#fef3c7':'#ede9fe')+';color:'+(p.jenis==='tunai'?'#92400e':'#5b21b6')+';padding:2px 6px;border-radius:99px">'+( p.jenis==='tunai'?'Tunai':'NT')+'</span>'
+        +'<span class="mono" style="color:var(--red)">'+toRp(p.n)+'</span>';
+      if(p.foto){
+        var imgWrap=document.createElement('div');
+        imgWrap.style.cssText='display:flex;align-items:center;gap:3px';
+        var img=document.createElement('img');
+        img.src=p.foto;
+        img.style.cssText='width:30px;height:30px;border-radius:7px;object-fit:cover;cursor:pointer;border:2px solid #bfdbfe';
+        img.title='Tap untuk perbesar';
+        img.onclick=function(){openFotoModal(this.src);};
+        imgWrap.appendChild(img);
+        d.appendChild(imgWrap);
+      }
+      pkl.appendChild(d);
+    });
+  }
+  nav('sukses');
+}
+
+// ── WhatsApp ────────────────────────────────────────────
+function getWaNum(){
+  // Selalu baca dari SETTINGS (diisi dari Firebase, bukan dari DOM)
+  // DOM element #wa-num hanya ada di halaman admin — kasir tidak punya akses
+  var num = SETTINGS.waNum || '';
+  // Fallback: cek DOM jika ada (misal admin sedang di halaman Settings)
+  var el = G('wa-num');
+  if(el && el.value.trim()) num = el.value.trim();
+  return num;
+}
+
+function buildWAMsg(r){
+  var tgl=fmtDate(r.date);
+  var isShift2 = r.shift===2 && r.s1Ref;
+  var msg='*LAPORAN CLOSING — SHIRO CLEAN*\n'
+    +'━━━━━━━━━━━━━━━━━━━━\n'
+    +'📅 '+tgl+'\n'
+    +'👤 Kasir : '+r.kasir+'\n'
+    +'🕐 Jam   : '+r.jam+'\n';
+
+  if(isShift2){
+    // Format lengkap: SHIFT 1 + SHIFT 2 + TOTAL HARIAN
+    var s1=r.s1Ref;
+    // Tunai/QRIS/Tf/EDC Shift 2 = r.tunai/qris/transfer/edc (sudah selisih)
+    // Total Harian = rawTunai/rawQris/rawTransfer/rawEdc
+    var totalT  = r.rawTunai   || (s1.tunai   + r.tunai);
+    var totalQ  = r.rawQris    || (s1.qris    + r.qris);
+    var totalTf = r.rawTransfer|| (s1.transfer+ r.transfer);
+    var totalE  = r.rawEdc     || (s1.edc     + r.edc);
+
+    msg+='━━━━━━━━━━━━━━━━━━━━\n'
+      +'*SHIFT 1*\n'
+      +'💵 Tunai    : '+toRp(s1.tunai)+'\n'
+      +'📱 QRIS     : '+toRp(s1.qris)+'\n'
+      +'🏦 Transfer : '+toRp(s1.transfer)+'\n'
+      +'💳 EDC      : '+toRp(s1.edc)+'\n'
+      +'━━━━━━━━━━━━━━━━━━━━\n'
+      +'*SHIFT 2*\n'
+      +'💵 Tunai    : '+toRp(r.tunai)+'\n'
+      +'📱 QRIS     : '+toRp(r.qris)+'\n'
+      +'🏦 Transfer : '+toRp(r.transfer)+'\n'
+      +'💳 EDC      : '+toRp(r.edc)+'\n';
+    if(r.pengeluaran&&r.pengeluaran.length){
+      msg+='━━━━━━━━━━━━━━━━━━━━\n';
+      r.pengeluaran.forEach(function(p){msg+='📤 '+p.k+' ('+( p.jenis==='tunai'?'Tunai':'NT')+'): '+toRp(p.n)+'\n';});
+    }
+    if(r.pemasukan&&r.pemasukan.length){
+      r.pemasukan.forEach(function(p){msg+='📥 '+p.k+' ('+(p.jenis==='tunai'?'Tunai':'NT')+'): '+toRp(p.n)+'\n';});
+    }
+    msg+='━━━━━━━━━━━━━━━━━━━━\n'
+      +'*TOTAL HARIAN*\n'
+      +'💵 Tunai    : '+toRp(totalT)+'\n'
+      +'📱 QRIS     : '+toRp(totalQ)+'\n'
+      +'🏦 Transfer : '+toRp(totalTf)+'\n'
+      +'💳 EDC      : '+toRp(totalE)+'\n'
+      +'━━━━━━━━━━━━━━━━━━━━\n'
+      +'🟡 Setoran Tunai    : '+toRp(r.setoranTunai)+'\n'
+      +'🟣 Setoran Non Tunai: '+toRp(r.setoranNonTunai)+'\n'
+      +'💰 Total Omzet Harian: *'+toRp(r.totalOmzet)+'*';
+  } else {
+    // Shift 1 atau Shift tunggal — format sederhana
+    msg+='🕐 Shift '+r.shift+'\n'
+      +'━━━━━━━━━━━━━━━━━━━━\n'
+      +'💵 Tunai    : '+toRp(r.tunai)+'\n'
+      +'📱 QRIS     : '+toRp(r.qris)+'\n'
+      +'🏦 Transfer : '+toRp(r.transfer)+'\n'
+      +'💳 EDC      : '+toRp(r.edc)+'\n';
+    if(r.pengeluaran&&r.pengeluaran.length){
+      msg+='━━━━━━━━━━━━━━━━━━━━\n';
+      r.pengeluaran.forEach(function(p){msg+='📤 '+p.k+' ('+( p.jenis==='tunai'?'Tunai':'NT')+'): '+toRp(p.n)+'\n';});
+    }
+    if(r.pemasukan&&r.pemasukan.length){
+      r.pemasukan.forEach(function(p){msg+='📥 '+p.k+' ('+(p.jenis==='tunai'?'Tunai':'NT')+'): '+toRp(p.n)+'\n';});
+    }
+    msg+='━━━━━━━━━━━━━━━━━━━━\n'
+      +'🟡 Setoran Tunai    : '+toRp(r.setoranTunai)+'\n'
+      +'🟣 Setoran Non Tunai: '+toRp(r.setoranNonTunai)+'\n'
+      +'💰 Total Omzet      : *'+toRp(r.totalOmzet)+'*';
+  }
+  if((r.pettyCashAwal||0)>0||(r.pettyCashAkhir||0)>0){
+    msg+='\n━━━━━━━━━━━━━━━━━━━━\n'
+      +'💼 Petty Cash Awal  : '+toRp(r.pettyCashAwal||0)+'\n'
+      +'💼 Petty Cash Akhir : '+toRp(r.pettyCashAkhir||0);
+  }
+  return msg;
+}
+
+function sendWA(){
+  var r=LAST_REPORT;if(!r)return;
+  var num=getWaNum();
+  if(!num){
+    alert('Nomor WhatsApp belum diatur.\n\nAdmin harus mengisi nomor di:\nDashboard → Pengaturan → Nomor WhatsApp');
+    return;
+  }
+  var url='https://wa.me/'+num+'?text='+encodeURIComponent(buildWAMsg(r));
+  try{var w=window.open(url,'_blank');if(!w||w.closed)window.location.href=url;}catch(e){window.location.href=url;}
+}
+
+// ── Login / Auth ────────────────────────────────────────
+// ── Auth helpers ────────────────────────────────────────
+var AUTH_KEY      = 'sc_auth';       // localStorage: sesi remember me
+var PIN_KEY       = 'sc_pin';        // localStorage: PIN hash
+var BIO_KEY       = 'sc_bio';        // localStorage: biometrik aktif
+var REMEMBER_DAYS = 30;
+
+function togglePw(inputId,iconId){
+  var inp=G(inputId),ico=G(iconId);if(!inp)return;
+  var show=inp.type==='password';inp.type=show?'text':'password';
+  if(ico){ico.innerHTML=show
+    ?'<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19M1 1l22 22"/>'
+    :'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';}
+}
+
+function clearLoginForm(){
+  var u=G('l-u'),p=G('l-p'),err=G('l-err'),rem=G('l-remember');
+  if(u)u.value='';
+  if(p){p.value='';p.type='password';}
+  if(rem)rem.checked=false;
+  var ico=G('eye-login');if(ico)ico.innerHTML='<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  if(err)err.style.display='none';
+  showPasswordForm();
+}
+
+// ── Simple hash untuk PIN (bukan kriptografi penuh, tapi cukup untuk lokal) ──
+function hashPin(pin){
+  var h=0,i,chr;
+  for(i=0;i<pin.length;i++){chr=pin.charCodeAt(i);h=((h<<5)-h)+chr;h|=0;}
+  return 'pin_'+Math.abs(h).toString(36)+'_'+pin.length;
+}
+
+// ── Sesi: Remember Me (localStorage, 30 hari) ─────────────────────────────────
+function saveRememberSession(){
+  try{
+    var exp = Date.now() + REMEMBER_DAYS*86400*1000;
+    localStorage.setItem(AUTH_KEY, JSON.stringify({v:1,exp:exp}));
+  }catch(e){}
+}
+function clearRememberSession(){
+  try{localStorage.removeItem(AUTH_KEY);}catch(e){}
+}
+function checkRememberSession(){
+  try{
+    var raw=localStorage.getItem(AUTH_KEY);
+    if(!raw)return false;
+    var d=JSON.parse(raw);
+    return d&&d.v===1&&d.exp&&Date.now()<d.exp;
+  }catch(e){return false;}
+}
+
+// ── Sesi saat ini (sessionStorage, tutup tab = hilang) ────────────────────────
+function setCurrentSession(){
+  try{sessionStorage.setItem('sc_session','1');}catch(e){}
+  ADMIN_SESSION=true;
+}
+function clearCurrentSession(){
+  try{sessionStorage.removeItem('sc_session');}catch(e){}
+  ADMIN_SESSION=false;
+}
+function checkSession(){
+  if(ADMIN_SESSION)return true;
+  // Cek sessionStorage
+  try{if(sessionStorage.getItem('sc_session')==='1'){ADMIN_SESSION=true;return true;}}catch(e){}
+  // Cek remember me
+  if(checkRememberSession()){ADMIN_SESSION=true;return true;}
+  return false;
+}
+
+// ── PIN ───────────────────────────────────────────────────────────────────────
+function savePin(pin){
+  try{localStorage.setItem(PIN_KEY,hashPin(pin));}catch(e){}
+}
+function clearPin(){
+  try{localStorage.removeItem(PIN_KEY);}catch(e){}
+}
+function verifyPin(pin){
+  try{var stored=localStorage.getItem(PIN_KEY);return stored&&stored===hashPin(pin);}catch(e){return false;}
+}
+function hasPin(){
+  try{return !!localStorage.getItem(PIN_KEY);}catch(e){return false;}
+}
+
+// ── Biometrik (WebAuthn / platform authenticator) ─────────────────────────────
+function bioAvailable(){
+  return !!(window.PublicKeyCredential && navigator.credentials &&
+    typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function');
+}
+var bioEnabled = false;
+function loadBioState(){
+  try{bioEnabled=localStorage.getItem(BIO_KEY)==='1';}catch(e){bioEnabled=false;}
+}
+function saveBioEnabled(){
+  try{localStorage.setItem(BIO_KEY,'1');}catch(e){}
+  bioEnabled=true;
+}
+function clearBioEnabled(){
+  try{localStorage.removeItem(BIO_KEY);}catch(e){}
+  bioEnabled=false;
+}
+
+// Biometrik menggunakan WebAuthn platform authenticator
+// Kredensial disimpan di perangkat — tidak dikirim ke server
+var BIO_RP_ID    = window.location.hostname||'localhost';
+var BIO_USER_ID  = new Uint8Array([1,2,3,4]); // fixed ID untuk satu admin
+var bioCredentialId = null;
+
+function loadBioCredentialId(){
+  try{var raw=localStorage.getItem('sc_bio_cred');if(raw)bioCredentialId=JSON.parse(raw);}catch(e){}
+}
+function saveBioCredentialId(id){
+  try{localStorage.setItem('sc_bio_cred',JSON.stringify(id));bioCredentialId=id;}catch(e){}
+}
+
+async function setupBiometrikWebAuthn(){
+  if(!bioAvailable()){alert('Biometrik tidak tersedia di perangkat ini.');return false;}
+  try{
+    var challenge=new Uint8Array(32);crypto.getRandomValues(challenge);
+    var cred=await navigator.credentials.create({publicKey:{
+      challenge:challenge,
+      rp:{name:'Shiro Closing',id:BIO_RP_ID},
+      user:{id:BIO_USER_ID,name:'admin',displayName:'Admin Shiro'},
+      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},
+      timeout:60000
+    }});
+    saveBioCredentialId(Array.from(new Uint8Array(cred.rawId)));
+    saveBioEnabled();
+    return true;
+  }catch(e){
+    console.error('Biometrik setup:',e);
+    if(e.name==='NotAllowedError')alert('Izin biometrik ditolak. Coba lagi.');
+    else alert('Biometrik tidak tersedia: '+e.message);
+    return false;
+  }
+}
+
+async function verifyBiometrikWebAuthn(){
+  if(!bioEnabled||!bioCredentialId)return false;
+  try{
+    var challenge=new Uint8Array(32);crypto.getRandomValues(challenge);
+    var assertion=await navigator.credentials.get({publicKey:{
+      challenge:challenge,
+      rpId:BIO_RP_ID,
+      allowCredentials:[{type:'public-key',id:new Uint8Array(bioCredentialId)}],
+      userVerification:'required',
+      timeout:60000
+    }});
+    return !!assertion;
+  }catch(e){
+    console.error('Biometrik verify:',e);
+    return false;
+  }
+}
+
+// ── Tampilkan form password ────────────────────────────────────────────────────
+function showPasswordForm(){
+  var qp=G('quick-login-panel'),pwp=G('pw-form-panel'),pp=G('pin-panel');
+  if(qp)qp.style.display='none';
+  if(pwp)pwp.style.display='block';
+  if(pp)pp.style.display='none';
+}
+
+// ── Init halaman login — tampilkan opsi yang tersedia ─────────────────────────
+function initLoginPage(){
+  loadBioState();loadBioCredentialId();
+  var hasPIN=hasPin(),hasBio=bioEnabled&&bioCredentialId;
+  var qp=G('quick-login-panel'),bioBtn=G('bio-btn'),pinPanel=G('pin-panel'),divOr=G('divider-or');
+  // Jika ada PIN atau biometrik → tampilkan quick login
+  if(hasPIN||hasBio){
+    if(qp)qp.style.display='block';
+    if(hasBio){
+      if(bioBtn){
+        bioBtn.style.display='flex';
+        var lbl=G('bio-label');
+        if(lbl)lbl.textContent=isMobile()?'Masuk dengan Fingerprint / Face ID':'Masuk dengan Biometrik';
+      }
+    }
+    if(hasPIN){
+      if(pinPanel)pinPanel.style.display='block';
+      buildPinKeypad();
+      renderPinDots(0);
+    }
+    if(divOr)divOr.style.display=hasPIN?'none':'flex'; // jika hanya bio, tampilkan divider
+  } else {
+    showPasswordForm();
+  }
+  // Jika hanya bio (tidak ada PIN), tampilkan form password juga
+  if(hasBio&&!hasPIN){
+    var pwp=G('pw-form-panel');if(pwp)pwp.style.display='block';
+  }
+}
+
+function isMobile(){return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);}
+
+// ── PIN Keypad ─────────────────────────────────────────────────────────────────
+var pinInput='';
+var pinMaxLen=6;
+function buildPinKeypad(){
+  var kp=G('pin-keypad');if(!kp)return;kp.innerHTML='';
+  var keys=['1','2','3','4','5','6','7','8','9','','0','⌫'];
+  keys.forEach(function(k){
+    var btn=document.createElement('button');
+    btn.style.cssText='padding:14px;border-radius:12px;font-size:18px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid var(--bg2);background:'+(k?'var(--white)':'transparent')+';color:var(--ink);';
+    btn.textContent=k;
+    if(k===''){btn.style.background='transparent';btn.style.border='none';btn.disabled=true;}
+    else{btn.onclick=(function(kk){return function(){pinKeyPress(kk);};})(k);}
+    kp.appendChild(btn);
+  });
+}
+function renderPinDots(len){
+  var pd=G('pin-dots');if(!pd)return;pd.innerHTML='';
+  var max=Math.max(6,len);
+  for(var i=0;i<6;i++){
+    var dot=document.createElement('div');
+    dot.style.cssText='width:12px;height:12px;border-radius:50%;border:2px solid '+(i<len?'var(--red)':'var(--bg2)')+';background:'+(i<len?'var(--red)':'transparent');
+    pd.appendChild(dot);
+  }
+}
+function pinKeyPress(k){
+  if(k==='⌫'){pinInput=pinInput.slice(0,-1);}
+  else if(pinInput.length<pinMaxLen){pinInput+=k;}
+  renderPinDots(pinInput.length);
+  // Auto-submit setelah 4-6 digit (coba verifikasi setiap 4+)
+  if(pinInput.length>=4&&verifyPin(pinInput)){
+    pinInput='';renderPinDots(0);
+    onLoginSuccess(false);
+  } else if(pinInput.length>=pinMaxLen){
+    // PIN salah
+    var pd=G('pin-dots');if(pd){pd.style.animation='shake .3s';setTimeout(function(){if(pd)pd.style.animation='';},400);}
+    pinInput='';renderPinDots(0);
+  }
+}
+
+// ── Biometrik login ────────────────────────────────────────────────────────────
+async function loginBiometrik(){
+  var ok=await verifyBiometrikWebAuthn();
+  if(ok)onLoginSuccess(false);
+  else alert('Verifikasi biometrik gagal. Gunakan password.');
+}
+
+// ── Login berhasil (dipanggil dari semua metode) ──────────────────────────────
+function onLoginSuccess(showSetup){
+  var rem=G('l-remember');
+  if(rem&&rem.checked) saveRememberSession();
+  setCurrentSession();
+  if(showSetup) showSetupModal(); else nav('dashboard');
+}
+
+// ── doLogin (username + password) ─────────────────────────────────────────────
+function doLogin(){
+  var uEl=G('l-u'),pEl=G('l-p'),err=G('l-err');
+  var u=(uEl&&uEl.value.trim())||'',p=(pEl&&pEl.value)||'';
+  if(!u||!p){if(err){err.style.display='block';err.textContent='Username dan password wajib diisi.';}return;}
+  if(u===ADMIN_CREDS.user&&p===ADMIN_CREDS.pass){
+    if(err)err.style.display='none';
+    // Setelah login password berhasil, tawarkan setup login cepat
+    onLoginSuccess(true);
+  }else{
+    if(err){err.style.display='block';err.textContent='Username atau Password salah.';}
+    if(pEl)pEl.value='';
+  }
+}
+
+// ── Setup Modal ────────────────────────────────────────────────────────────────
+function showSetupModal(){
+  var modal=G('setup-modal');if(!modal)return;
+  modal.style.display='flex';
+  // Cek apakah biometrik tersedia
+  var bioSec=G('setup-bio-section');
+  if(bioAvailable()&&bioSec){
+    bioSec.style.display='block';
+    var lbl=G('setup-bio-label');
+    if(lbl)lbl.textContent='Aktifkan '+(isMobile()?'Fingerprint / Face ID':'Biometrik');
+  }
+  var pinInp=G('setup-pin');if(pinInp)pinInp.value='';
+}
+function closeSetupModal(){
+  var modal=G('setup-modal');if(modal)modal.style.display='none';
+  nav('dashboard');
+}
+async function setupBiometrik(){
+  var ok=await setupBiometrikWebAuthn();
+  if(ok){
+    var lbl=G('setup-bio-label');if(lbl)lbl.textContent='✓ Biometrik Aktif';
+    var btn=G('setup-bio-section').querySelector('button');if(btn){btn.style.background='#dcfce7';btn.disabled=true;}
+  }
+}
+function saveSetup(){
+  var pinInp=G('setup-pin'),pinErr=G('setup-pin-err');
+  var pin=(pinInp&&pinInp.value.trim())||'';
+  if(pin){
+    if(pin.length<4||!/^\d+$/.test(pin)){
+      if(pinErr){pinErr.style.display='block';pinErr.textContent='PIN harus 4-6 angka.';}return;
+    }
+    savePin(pin);
+    if(pinErr)pinErr.style.display='none';
+  }
+  closeSetupModal();
+}
+
+// ── Logout ─────────────────────────────────────────────────────────────────────
+function logout(){
+  clearCurrentSession();
+  // Tanya apakah hapus remember me juga
+  if(checkRememberSession()){
+    if(confirm('Hapus sesi "Ingat Saya" juga?\nJika Ya, perlu login ulang saat membuka aplikasi berikutnya.')){
+      clearRememberSession();
+    }
+  }
+  clearLoginForm();
+  nav('login');
+}
+
+function checkSession(){
+  if(ADMIN_SESSION)return true;
+  try{if(sessionStorage.getItem('sc_session')==='1'){ADMIN_SESSION=true;return true;}}catch(e){}
+  if(checkRememberSession()){ADMIN_SESSION=true;return true;}
+  return false;
+}
+
+// ── Dashboard ──────────────────────────────────────────
+function initDashboard(){
+  if(!checkSession()){nav('login');return;}
+  var tgl=G('d-date');
+  if(tgl)tgl.textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  var today=todayStr(),now=new Date();
+  var mStr=now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2);
+  var tr=REPORTS.filter(function(r){return r.date===today;});
+  var mr=REPORTS.filter(function(r){return r.date.slice(0,7)===mStr;});
+  var sum=function(arr,k){return arr.reduce(function(s,r){return s+(r[k]||0);},0);};
+
+  var todayOM=sum(tr,'totalOmzet'),monthOM=sum(mr,'totalOmzet');
+  var todayST=sum(tr,'setoranTunai'),monthST=sum(mr,'setoranTunai');
+  var todaySN=sum(tr,'setoranNonTunai');
+  var todayPK=sum(tr,'totalPengeluaran'),monthPK=sum(mr,'totalPengeluaran');
+  var todayPM=sum(tr,'totalPemasukan'),monthPM=sum(mr,'totalPemasukan');
+
+  var dp=SETTINGS.daily?Math.min(Math.round((todayOM/SETTINGS.daily)*100),100):0;
+  var mp=SETTINGS.monthly?Math.min(Math.round((monthOM/SETTINGS.monthly)*100),100):0;
+
+  ST('d-today',toRp(todayOM));ST('d-today-pct',dp+'% target harian');
+  var db=G('d-today-bar');if(db)db.style.width=dp+'%';
+  ST('d-month',toRp(monthOM));ST('d-month-pct',mp+'% target bulanan');
+  var mb=G('d-month-bar');if(mb)mb.style.width=mp+'%';
+  ST('d-target-daily',SETTINGS.daily>=1e6?'Rp '+(SETTINGS.daily/1e6).toFixed(0)+'jt':toRp(SETTINGS.daily));
+  ST('d-target-month',SETTINGS.monthly>=1e6?'Rp '+(SETTINGS.monthly/1e6).toFixed(0)+'jt':toRp(SETTINGS.monthly));
+  ST('d-cnt-today',String(tr.length));ST('d-cnt-month',String(mr.length));
+
+  // Hari ini
+  ST('d-st-today',toRp(todayST));ST('d-sn-today',toRp(todaySN));
+  ST('d-pk-today',toRp(todayPK));ST('d-pm-today',toRp(todayPM));
+  // Bulan ini
+  ST('d-st-month',toRp(monthST));ST('d-pk-month',toRp(monthPK));ST('d-pm-month',toRp(monthPM));
+}
+
+// ── Laporan ─────────────────────────────────────────────
+var lapFilterMode='all';
+function setFilter(mode){
+  lapFilterMode=mode;
+  ['all','today','week','month','custom'].forEach(function(id){
+    var b=G('f-'+id);if(b)b.className='filter-chip'+(id===mode?' on':'');
+  });
+  var cr=G('custom-range');if(cr)cr.style.display=mode==='custom'?'block':'none';
+  renderLaporan();
+}
+function toggleCustomRange(){setFilter(lapFilterMode==='custom'?'all':'custom');}
+function getFilteredReports(){
+  var now=new Date(),today=todayStr();
+  return REPORTS.filter(function(r){
+    if(lapFilterMode==='all')return true;
+    if(lapFilterMode==='today')return r.date===today;
+    if(lapFilterMode==='week'){var d=new Date(r.date+'T00:00:00');return (now-d)/(864e5)<=7;}
+    if(lapFilterMode==='month'){var ms=now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2);return r.date.slice(0,7)===ms;}
+    if(lapFilterMode==='custom'){
+      var from=G('f-from')&&G('f-from').value,to=G('f-to')&&G('f-to').value;
+      if(from&&r.date<from)return false;if(to&&r.date>to)return false;return true;
+    }
+    return true;
+  });
+}
+function initLaporan(){
+  if(!checkSession()){nav('login');return;}
+  lapFilterMode='all';renderLaporan();
+}
+function renderLaporan(){
+  var list=G('lap-list');if(!list)return;
+  var data=getFilteredReports();
+  var cnt=G('lap-count');if(cnt)cnt.textContent=data.length+' laporan';
+  // Totals
+  var sum=function(k){return data.reduce(function(s,r){return s+(r[k]||0);},0);};
+  ST('lt-st',toRp(sum('setoranTunai')));ST('lt-sn',toRp(sum('setoranNonTunai')));
+  ST('lt-om',toRp(sum('totalOmzet')));ST('lt-pk',toRp(sum('totalPengeluaran')));ST('lt-pm',toRp(sum('totalPemasukan')));
+  var lt=G('lap-totals');if(lt)lt.style.display=data.length?'block':'none';
+  list.innerHTML='';
+  if(!data.length){var p=document.createElement('p');p.style.cssText='text-align:center;color:var(--ink3);padding:36px 0;font-size:13px';p.textContent='Belum ada laporan';list.appendChild(p);return;}
+  data.forEach(function(r){
+    var card=document.createElement('div');card.className='card';card.style.cssText='padding:12px;margin-bottom:8px;cursor:pointer';
+    card.onclick=(function(rid){return function(){openDetail(rid);};})(r.id);
+    var top=document.createElement('div');top.style.cssText='display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px';
+    var left=document.createElement('div');
+    left.innerHTML='<p style="font-weight:800;font-size:13px;color:var(--ink)">'+r.kasir+'</p>'
+      +'<p style="font-size:11px;color:var(--ink3);margin-top:2px">'+fmtDateShort(r.date)+' · '+r.jam+'</p>';
+    var right=document.createElement('div');right.style.cssText='display:flex;flex-direction:column;align-items:flex-end;gap:3px';
+    right.innerHTML='<span class="badge" style="background:'+(r.shift===1?'#fef3c7':'#ede9fe')+';color:'+(r.shift===1?'#92400e':'#5b21b6')+'">Shift '+r.shift+'</span>'
+      +(r.posScreenshot?'<span class="badge" style="background:#f0fdf4;color:#16a34a;font-size:9px">✓ POS</span>':'<span class="badge" style="background:#fef2f2;color:#dc2626;font-size:9px">Tanpa POS</span>')
+      +'<span class="mono" style="font-weight:800;font-size:13px;color:var(--ink)">'+toRp(r.totalOmzet)+'</span>';
+    top.appendChild(left);top.appendChild(right);card.appendChild(top);
+    // 3 angka utama
+    var nums=document.createElement('div');nums.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:9px;font-size:11px';
+    nums.innerHTML='<div style="background:#fffbeb;border-radius:8px;padding:5px 6px;text-align:center"><p style="color:#92400e;font-size:9px;font-weight:700">Setoran Tunai</p><p class="mono" style="color:#d97706;font-weight:700">'+toRp(r.setoranTunai)+'</p></div>'
+      +'<div style="background:#ede9fe;border-radius:8px;padding:5px 6px;text-align:center"><p style="color:#5b21b6;font-size:9px;font-weight:700">Non Tunai</p><p class="mono" style="color:#6d28d9;font-weight:700">'+toRp(r.setoranNonTunai)+'</p></div>'
+      +'<div style="background:#f0fdf4;border-radius:8px;padding:5px 6px;text-align:center"><p style="color:#166534;font-size:9px;font-weight:700">Total Omzet</p><p class="mono" style="color:#16a34a;font-weight:700">'+toRp(r.totalOmzet)+'</p></div>';
+    card.appendChild(nums);
+    var acts=document.createElement('div');acts.style.cssText='display:flex;gap:6px;border-top:1px solid var(--bg2);padding-top:9px';
+    function mkAct(label,style,fn){var b=document.createElement('button');b.style.cssText='flex:1;padding:6px 0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid var(--bg2);'+style;b.textContent=label;b.onclick=function(e){e.stopPropagation();fn();};return b;}
+    acts.appendChild(mkAct('Lihat','background:var(--bg);color:var(--ink2)',function(){openDetail(r.id);}));
+    acts.appendChild(mkAct('Hapus','background:var(--red-l);color:var(--red);border-color:var(--red-b)',function(){deleteReport(r.id);}));
+    card.appendChild(acts);list.appendChild(card);
+  });
+}
+function deleteReport(id){
+  if(!confirm('Hapus laporan ini?'))return;
+  deleteReportFromDB(id);renderLaporan();
+}
+
+// ── Detail ──────────────────────────────────────────────
+var CURRENT_REPORT_ID=null;
+function openDetail(id){
+  CURRENT_REPORT_ID=id;
+  var r=REPORTS.find(function(x){return x.id===id;});if(!r)return;
+  ST('det-title-sub',fmtDateShort(r.date)+' · Shift '+r.shift);
+  renderDetail(r);nav('detail');
+}
+function renderDetail(r){
+  var con=G('det-content');if(!con)return;con.innerHTML='';
+  // Main info card
+  var card=document.createElement('div');card.className='card';card.style.padding='13px';
+  var rows=[
+    ['Kasir',r.kasir],['Tanggal',fmtDate(r.date)],
+    ['Shift','Shift '+r.shift],['Jam',r.jam],
+  ];
+  var html='<div style="display:flex;flex-direction:column;gap:0">';
+  rows.forEach(function(ro){html+='<div class="data-row"><span class="muted">'+ro[0]+'</span><span style="font-weight:600">'+ro[1]+'</span></div>';});
+  html+='<div style="height:1px;background:var(--bg2);margin:4px 0"></div>';
+  [['Tunai',r.tunai],['QRIS',r.qris],['Transfer',r.transfer],['EDC',r.edc]].forEach(function(ro){
+    html+='<div class="data-row"><span class="muted">'+ro[0]+'</span><span class="mono" style="font-weight:600">'+toRp(ro[1])+'</span></div>';
+  });
+  html+='</div>';
+  card.innerHTML=html;con.appendChild(card);
+
+  // 3 angka utama
+  var nums=document.createElement('div');nums.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px';
+  nums.innerHTML='<div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:14px;padding:12px;text-align:center"><p style="font-size:9px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Setoran Tunai</p><p class="mono" style="font-weight:800;font-size:14px;color:#d97706">'+toRp(r.setoranTunai)+'</p></div>'
+    +'<div style="background:#ede9fe;border:1.5px solid #c4b5fd;border-radius:14px;padding:12px;text-align:center"><p style="font-size:9px;font-weight:700;color:#5b21b6;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Non Tunai</p><p class="mono" style="font-weight:800;font-size:14px;color:#6d28d9">'+toRp(r.setoranNonTunai)+'</p></div>'
+    +'<div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:14px;padding:12px;text-align:center"><p style="font-size:9px;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Total Omzet</p><p class="mono" style="font-weight:800;font-size:14px;color:#16a34a">'+toRp(r.totalOmzet)+'</p></div>';
+  con.appendChild(nums);
+
+  // Pengeluaran detail with photos
+  if(r.pengeluaran&&r.pengeluaran.length){
+    var pkCard=document.createElement('div');pkCard.className='card';pkCard.style.padding='13px';
+    var pkHtml='<p class="sec" style="margin-bottom:9px">Pengeluaran</p>';
+    r.pengeluaran.forEach(function(p){
+      pkHtml+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bg2);font-size:13px">'
+        +'<span style="flex:1;color:var(--ink2)">'+p.k+'</span>'
+        +'<span style="font-size:10px;background:'+(p.jenis==='tunai'?'#fef3c7':'#ede9fe')+';color:'+(p.jenis==='tunai'?'#92400e':'#5b21b6')+';padding:2px 6px;border-radius:99px">'+(p.jenis==='tunai'?'Tunai':'NT')+'</span>'
+        +'<span class="mono" style="color:var(--red)">'+toRp(p.n)+'</span>';
+      if(p.foto){
+        pkHtml+='<div style="display:flex;align-items:center;gap:4px">'
+          +'<img src="'+p.foto+'" '
+          +'onclick="openFotoModal(\''+p.foto+'\')" '
+          +'style="width:36px;height:36px;border-radius:8px;object-fit:cover;cursor:pointer;border:2px solid #bfdbfe" '
+          +'title="Tap untuk perbesar"/>'
+          +'<a href="'+p.foto+'" download target="_blank" '
+          +'style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:#eff6ff;border:1px solid #bfdbfe;text-decoration:none" '
+          +'title="Download foto">'
+          +'<svg width="12" height="12" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'
+          +'</a>'
+          +'</div>';
+      }
+      pkHtml+='</div>';
+    });
+    pkCard.innerHTML=pkHtml;con.appendChild(pkCard);
+  }
+
+  // Pemasukan lain
+  if(r.pemasukan&&r.pemasukan.length){
+    var pmCard=document.createElement('div');pmCard.className='card';pmCard.style.padding='13px';
+    var pmHtml='<p class="sec" style="margin-bottom:9px">Pemasukan Lain</p>';
+    r.pemasukan.forEach(function(p){
+      pmHtml+='<div class="data-row"><span style="color:var(--ink2)">'+p.k+'</span><span class="mono" style="color:var(--ok)">'+toRp(p.n)+'</span></div>';
+    });
+    pmCard.innerHTML=pmHtml;con.appendChild(pmCard);
+  }
+
+  // Petty Cash block — tampilkan hanya jika ada
+  if((r.pettyCashAwal||0) > 0 || (r.pettyCashAkhir||0) > 0){
+    var pcCard=document.createElement('div');pcCard.className='card';pcCard.style.padding='13px';
+    var pcHtml='<p class="sec" style="margin-bottom:9px">💼 Petty Cash</p>'
+      +'<div class="data-row"><span class="muted">Awal</span><span class="mono" style="font-weight:700">'+toRp(r.pettyCashAwal||0)+'</span></div>'
+      +'<div class="data-row" style="border-bottom:none"><span class="muted">Akhir</span><span class="mono" style="font-weight:700">'+toRp(r.pettyCashAkhir||0)+'</span></div>';
+    pcCard.innerHTML=pcHtml;
+    con.appendChild(pcCard);
+  }
+
+  // Screenshot POS + indikator selisih
+  if(r.posScreenshot){
+    var posCard=document.createElement('div');posCard.className='card';posCard.style.padding='13px';
+    var posHtml='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">'
+      +'<p class="sec">Screenshot Laporan POS</p>'
+      +'<span style="font-size:10px;color:var(--ink3)">'+(r.posUploadedAt?new Date(r.posUploadedAt).toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'2-digit'})+' '+new Date(r.posUploadedAt).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):'')+'</span>'
+      +'</div>';
+    // Gambar preview
+    // Gunakan createElement agar tidak ada masalah escaping URL di onclick
+    posCard.innerHTML=posHtml;
+    var posImg=document.createElement('img');
+    posImg.src=r.posScreenshot;
+    posImg.style.cssText='width:100%;max-height:180px;object-fit:cover;border-radius:var(--r);cursor:pointer;border:2px solid #bfdbfe;margin-bottom:8px;display:block';
+    posImg.title='Tap untuk perbesar';
+    (function(url){posImg.onclick=function(){openFotoModal(url);};})(r.posScreenshot);
+    posCard.appendChild(posImg);
+    var dlWrap=document.createElement('div');dlWrap.style.cssText='display:flex;gap:8px;margin-bottom:10px';
+    var dlLink=document.createElement('a');
+    dlLink.href=r.posScreenshot;dlLink.download='';dlLink.target='_blank';
+    dlLink.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px;border-radius:var(--r);background:#eff6ff;border:1px solid #bfdbfe;text-decoration:none;font-size:12px;font-weight:700;color:#2563eb';
+    dlLink.innerHTML='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download';
+    dlWrap.appendChild(dlLink);posCard.appendChild(dlWrap);
+    posHtml='';//already built above
+    posCard.innerHTML=posHtml;
+    con.appendChild(posCard);
+  }
+
+  // Indikator selisih data POS (hanya tampil jika ada screenshot)
+  if(r.posScreenshot){
+    var diffCard2=document.createElement('div');
+    var diffRows=[
+      {l:'Tunai',    v:r.tunai||0},
+      {l:'QRIS',     v:r.qris||0},
+      {l:'Transfer', v:r.transfer||0},
+      {l:'EDC',      v:r.edc||0},
+    ];
+    var diffHtml='<div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:var(--r-lg);padding:12px 13px">'
+      +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">'
+      +'<svg width="14" height="14" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+      +'<span style="font-size:12px;font-weight:700;color:#92400e">Verifikasi Data POS</span>'
+      +'</div>'
+      +'<p style="font-size:11px;color:#92400e;margin-bottom:8px">Bandingkan data closing dengan screenshot POS di atas.</p>'
+      +'<div style="display:flex;flex-direction:column;gap:3px">';
+    diffRows.forEach(function(f){
+      diffHtml+='<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #fde68a">'
+        +'<span style="color:#78350f">'+f.l+'</span>'
+        +'<span class="mono" style="font-weight:700;color:#92400e">'+toRp(f.v)+'</span>'
+        +'</div>';
+    });
+    diffHtml+='</div>'
+      +'<p style="font-size:10px;color:#a16207;margin-top:7px;line-height:1.5">⚠️ Jika ada perbedaan dengan screenshot POS, harap konfirmasi ke kasir yang bersangkutan.</p>'
+      +'</div>';
+    diffCard2.innerHTML=diffHtml;
+    con.appendChild(diffCard2);
+  }
+
+  // WA button
+  var wb=document.createElement('button');wb.className='btn btn-green';wb.style.marginTop='2px';
+  wb.innerHTML='<svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Kirim ke WhatsApp';
+  wb.onclick=function(){LAST_REPORT=r;sendWA();};con.appendChild(wb);
+
+  var delb=document.createElement('button');delb.className='btn';delb.style.cssText='background:var(--red-l);color:var(--red);padding:13px;font-size:13px;border:1px solid var(--red-b);border-radius:var(--r-lg);margin-top:7px';
+  delb.textContent='Hapus Laporan';
+  delb.onclick=function(){deleteReport(r.id);nav('laporan');};con.appendChild(delb);
+}
+
+// ── Settings ────────────────────────────────────────────
+function initSettings(){
+  if(!checkSession()){nav('login');return;}
+  var d=G('set-daily');if(d){d.value=SETTINGS.daily;fmt(d);}
+  var m=G('set-monthly');if(m){m.value=SETTINGS.monthly;fmt(m);}
+  // Always show latest WA number from SETTINGS (saved in Firebase)
+  var w=G('wa-num');if(w)w.value=SETTINGS.waNum||'';
+}
+function saveSettings(){
+  SETTINGS.daily=pRp(G('set-daily').value);
+  SETTINGS.monthly=pRp(G('set-monthly').value);
+  SETTINGS.waNum=(G('wa-num')&&G('wa-num').value.trim())||'';
+  saveSettingsData();
+  // Reload WA number everywhere
+  alert('Pengaturan tersimpan.');
+}
+function saveCredentials(){
+  if(!checkSession()){alert('Sesi habis. Silakan login ulang.');nav('login');return;}
+  var uEl=G('set-user'),pEl=G('set-pass');
+  var u=(uEl&&uEl.value.trim())||'',p=(pEl&&pEl.value)||'';
+  if(p&&p.length<8){alert('Password minimal 8 karakter.');return;}
+  if(!u&&!p){alert('Isi username atau password baru.');return;}
+  if(u)ADMIN_CREDS.user=u;
+  if(p)ADMIN_CREDS.pass=p;
+  if(DB){
+    DB.ref('admin_creds').set(ADMIN_CREDS).then(function(){
+      alert('Kredensial berhasil diperbarui.');
+      if(uEl)uEl.value='';if(pEl){pEl.value='';pEl.type='password';}
+    }).catch(function(e){alert('Gagal: '+e.message);});
+  }else{
+    alert('Tidak terhubung ke Firebase.');
+  }
+}
+
+// ── Foto Modal ─────────────────────────────────────────────────────────────────
+function openFotoModal(src){
+  var modal=document.getElementById('foto-modal');
+  var img=document.getElementById('foto-modal-img');
+  var dl=document.getElementById('foto-modal-dl');
+  if(!modal||!img)return;
+  img.src=src;
+  if(dl)dl.href=src;
+  modal.style.display='flex';
+  document.body.style.overflow='hidden';
+}
+function closeFotoModal(){
+  var modal=document.getElementById('foto-modal');
+  if(modal)modal.style.display='none';
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeFotoModal();});
+
+// ── Export Excel ────────────────────────────────────────
+function exportExcel(){
+  try{
+    var rows=[['ID','Kasir','Tanggal','Shift','Jam','Tunai','QRIS','Transfer','EDC','Pemasukan','Pengeluaran','Setoran Tunai','Setoran Non Tunai','Total Omzet','Petty Cash Awal','Petty Cash Akhir']];
+    REPORTS.forEach(function(r){rows.push([r.id,r.kasir,r.date,'Shift '+r.shift,r.jam,r.tunai||0,r.qris||0,r.transfer||0,r.edc||0,r.totalPemasukan||0,r.totalPengeluaran||0,r.setoranTunai||0,r.setoranNonTunai||0,r.totalOmzet||0,r.pettyCashAwal||0,r.pettyCashAkhir||0]);});
+    var csv='\uFEFF'+rows.map(function(row){return row.map(function(c){var s=String(c);return s.indexOf(',')>=0||s.indexOf('"')>=0?'"'+s.replace(/"/g,'""')+'"':s;}).join(',');}).join('\r\n');
+    var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');a.href=url;
+    var now=new Date();a.download='shiro-closing-'+now.getFullYear()+('0'+(now.getMonth()+1)).slice(-2)+('0'+now.getDate()).slice(-2)+'.csv';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  }catch(e){console.error(e);alert('Gagal export: '+e.message);}
+}
+
+// ── Init ────────────────────────────────────────────────
+buildNav('dashboard','bnav-d');
+buildNav('laporan','bnav-l');
+buildNav('settings','bnav-s');
+loadBioState();
+loadBioCredentialId();
+initFirebase();
+// Auto-login jika sesi remember me masih aktif
+(function(){
+  if(checkRememberSession()||sessionStorage.getItem('sc_session')==='1'){
+    ADMIN_SESSION=true;
+    // Jika sedang di halaman login, langsung ke dashboard
+    if(G('login')&&G('login').classList.contains('show')){
+      nav('dashboard');
+    }
+  } else {
+    // Inisialisasi halaman login dengan opsi yang tersedia
+    initLoginPage();
+  }
+})();
+</script>
+</body>
+</html>
